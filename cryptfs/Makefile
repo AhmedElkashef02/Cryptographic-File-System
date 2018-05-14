@@ -1,9 +1,9 @@
-# $FreeBSD: releng/10.3/sys/modules/nullfs/Makefile 89260 2002-01-11 15:49:02Z ru $
+# $FreeBSD: releng/10.3/sys/modules/cryptfs/Makefile 89260 2002-01-11 15:49:02Z ru $
 
-.PATH: ${.CURDIR}/../../fs/nullfs
+.PATH: ${.CURDIR}/../../fs/cryptofs
 
-KMOD=	nullfs
+KMOD=	cryptofs
 SRCS=	vnode_if.h \
-	null_subr.c null_vfsops.c null_vnops.c
+	crypto_subr.c crypto_vfsops.c crypto_vnops.c
 
 .include <bsd.kmod.mk>
