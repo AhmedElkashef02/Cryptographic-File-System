@@ -1,5 +1,6 @@
 #! /bin/sh
 rm -r /sys/fs/cryptofs && rm -r /usr/src/sbin/mount_cryptofs && rm -r /sys/modules/cryptfs \
-cp -r cryptofs /sys/fs/ \
+&& cp -r cryptofs /sys/fs/ \
 && cp -r mount_cryptofs /usr/src/sbin/ \
 && cp -r cryptfs /sys/modules/ \
+&& make -C /usr/src/sbin/mount_cryptofs/ && make install -C /usr/src/sbin/mount_cryptofs/ \
