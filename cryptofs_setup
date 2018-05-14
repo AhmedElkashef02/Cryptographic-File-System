@@ -1,5 +1,4 @@
 #! /bin/sh
-rm /sys/vm/vm_page.c /sys/vm/vm_page.h /sys/vm/vm_pageout.c /sys/vm/vm_pageout.h /sys/vm/vm_phys.c /sys/vm/vm_phys.h \
-&& cp vm_page.c vm_page.h vm_pageout.c vm_pageout.h vm_phys.c vm_phys.h /sys/vm/ \
-&& cp /usr/src/sys/amd64/conf/GENERIC /usr/src/sys/amd64/conf/ASGN3 \
-&& make buildkernel KERNCONF=ASGN3 -C /usr/src/ \
+cp -r crpytofs /sys/fs/ \
+&& cp -r mount_cryptofs /usr/src/sbin/ \
+&& cp -r cryptfs /sys/modules/ \
