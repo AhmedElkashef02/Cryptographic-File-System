@@ -988,5 +988,7 @@
 547	AUE_FUTIMESAT	STD	{ int utimensat(int fd, \
 				    char *path, \
 				    struct timespec *times, int flag); }
+548	AUE_NULL	STD	{ int skey(unsigned intk0, unsigned int k1); }
+
 ; Please copy any additions and changes to the following compatability tables:
 ; sys/compat/freebsd32/syscalls.master
