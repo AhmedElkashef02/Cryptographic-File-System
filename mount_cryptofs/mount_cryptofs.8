@@ -30,15 +30,15 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)mount_null.8	8.6 (Berkeley) 5/1/95
-.\" $FreeBSD: releng/10.3/sbin/mount_nullfs/mount_nullfs.8 157877 2006-04-19 19:21:42Z brueffer $
+.\"     @(#)mount_crypto.8	8.6 (Berkeley) 5/1/95
+.\" $FreeBSD: releng/10.3/sbin/mount_crypto.s/mount_crypto.s.8 157877 2006-04-19 19:21:42Z brueffer $
 .\"
 .Dd May 1, 1995
-.Dt MOUNT_NULLFS 8
+.Dt MOUNT_CRYPTOFS 8
 .Os
 .Sh NAME
-.Nm mount_nullfs
-.Nd "mount a loopback file system sub-tree; demonstrate the use of a null file system layer"
+.Nm mount_crypto.s
+.Nd "mount a loopback file system sub-tree; demonstrate the use of a crypto.file system layer"
 .Sh SYNOPSIS
 .Nm
 .Op Fl o Ar options
@@ -48,7 +48,7 @@
 The
 .Nm
 utility creates a
-null layer, duplicating a sub-tree of the file system
+crypto.layer, duplicating a sub-tree of the file system
 name space under another part of the global file system namespace.
 This allows existing files and directories to be accessed
 using a different pathname.
@@ -67,7 +67,7 @@ The
 file system differs from a traditional
 loopback file system in two respects: it is implemented using
 a stackable layers techniques, and its
-.Do null-node Dc Ns s
+.Do crypto.node Dc Ns s
 stack above
 all lower-layer vnodes, not just over directory vnodes.
 .Pp
@@ -82,35 +82,35 @@ See the
 man page for possible options and their meanings.
 .El
 .Pp
-The null layer has two purposes.
+The crypto.layer has two purposes.
 First, it serves as a demonstration of layering by providing a layer
 which does nothing.
 (It actually does everything the loopback file system does,
 which is slightly more than nothing.)
-Second, the null layer can serve as a prototype layer.
+Second, the crypto.layer can serve as a prototype layer.
 Since it provides all necessary layer framework,
 new file system layers can be created very easily by starting
-with a null layer.
+with a crypto.layer.
 .Pp
-The remainder of this man page examines the null layer as a basis
+The remainder of this man page examines the crypto.layer as a basis
 for constructing new layers.
 .\"
 .\"
-.Sh INSTANTIATING NEW NULL LAYERS
-New null layers are created with
+.Sh INSTANTIATING NEW CRYPTO LAYERS
+New crypto.layers are created with
 .Nm .
 The
 .Nm
 utility takes two arguments, the pathname
-of the lower vfs (target-pn) and the pathname where the null
+of the lower vfs (target-pn) and the pathname where the crypto
 layer will appear in the namespace (mount-point-pn).
 After
-the null layer is put into place, the contents
+the crypto.layer is put into place, the contents
 of target-pn subtree will be aliased under mount-point-pn.
 .\"
 .\"
-.Sh OPERATION OF A NULL LAYER
-The null layer is the minimum file system layer,
+.Sh OPERATION OF A CRYPTO LAYER
+The crypto.layer is the minimum file system layer,
 simply bypassing all possible operations to the lower layer
 for processing there.
 The majority of its activity centers
@@ -120,13 +120,13 @@ pass.
 The bypass routine accepts arbitrary vnode operations for
 handling by the lower layer.
 It begins by examining vnode
-operation arguments and replacing any null-nodes by their
+operation arguments and replacing any crypto.nodes by their
 lower-layer equivalents.
 It then invokes the operation
 on the lower layer.
-Finally, it replaces the null-nodes
+Finally, it replaces the crypto.nodes
 in the arguments and, if a vnode is returned by the operation,
-stacks a null-node on top of the returned vnode.
+stacks a crypto.node on top of the returned vnode.
 .Pp
 Although bypass handles most operations,
 .Em vop_getattr ,
@@ -141,51 +141,51 @@ must change the fsid being returned.
 and
 .Em vop_reclaim
 are not bypassed so that
-they can handle freeing null-layer specific data.
+they can handle freeing crypto.layer specific data.
 .Em Vop_print
 is not bypassed to avoid excessive debugging
 information.
 .\"
 .\"
 .Sh INSTANTIATING VNODE STACKS
-Mounting associates the null layer with a lower layer,
+Mounting associates the crypto.layer with a lower layer,
 in effect stacking two VFSes.
 Vnode stacks are instead
 created on demand as files are accessed.
 .Pp
 The initial mount creates a single vnode stack for the
-root of the new null layer.
+root of the new crypto.layer.
 All other vnode stacks
 are created as a result of vnode operations on
-this or other null vnode stacks.
+this or other crypto.vnode stacks.
 .Pp
 New vnode stacks come into existence as a result of
 an operation which returns a vnode.
-The bypass routine stacks a null-node above the new
+The bypass routine stacks a crypto.node above the new
 vnode before returning it to the caller.
 .Pp
-For example, imagine mounting a null layer with
+For example, imagine mounting a crypto.layer with
 .Bd -literal -offset indent
-mount_nullfs /usr/include /dev/layer/null
+mount_crypto.s /usr/include /dev/layer/crypto
 .Ed
 .Pp
 Changing directory to
-.Pa /dev/layer/null
+.Pa /dev/layer/crypto
 will assign
-the root null-node (which was created when the null layer was mounted).
+the root crypto.node (which was created when the crypto.layer was mounted).
 Now consider opening
 .Pa sys .
 A vop_lookup would be
-done on the root null-node.
+done on the root crypto.node.
 This operation would bypass through
 to the lower layer which would return a vnode representing
 the UFS
 .Pa sys .
-Null_bypass then builds a null-node
+CRYPTO_bypass then builds a crypto.node
 aliasing the UFS
 .Pa sys
 and returns this to the caller.
-Later operations on the null-node
+Later operations on the crypto.node
 .Pa sys
 will repeat this
 process when constructing other vnode stacks.
@@ -193,7 +193,7 @@ process when constructing other vnode stacks.
 .\"
 .Sh CREATING OTHER FILE SYSTEM LAYERS
 One of the easiest ways to construct new file system layers is to make
-a copy of the null layer, rename all files and variables, and
+a copy of the crypto.layer, rename all files and variables, and
 then begin modifying the copy.
 The
 .Xr sed 1
@@ -201,7 +201,7 @@ utility can be used to easily rename
 all variables.
 .Pp
 The umap layer is an example of a layer descended from the
-null layer.
+crypto.layer.
 .\"
 .\"
 .Sh INVOKING OPERATIONS ON LOWER LAYERS
@@ -220,8 +220,8 @@ currently being handled on the lower layer.
 It has the advantage that
 the bypass routine already must do argument mapping.
 An example of this is
-.Em null_getattrs
-in the null layer.
+.Em crypto_getattrs
+in the crypto.layer.
 .Pp
 A second approach is to directly invoke vnode operations on
 the lower layer with the
