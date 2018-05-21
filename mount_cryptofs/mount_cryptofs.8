@@ -31,13 +31,13 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)mount_crypto.8	8.6 (Berkeley) 5/1/95
-.\" $FreeBSD: releng/10.3/sbin/mount_crypto.s/mount_crypto.s.8 157877 2006-04-19 19:21:42Z brueffer $
+.\" $FreeBSD: releng/10.3/sbin/mount_cryptofs/mount_cryptofs.8 157877 2006-04-19 19:21:42Z brueffer $
 .\"
 .Dd May 1, 1995
 .Dt MOUNT_CRYPTOFS 8
 .Os
 .Sh NAME
-.Nm mount_crypto.s
+.Nm mount_cryptofs
 .Nd "mount a loopback file system sub-tree; demonstrate the use of a crypto.file system layer"
 .Sh SYNOPSIS
 .Nm
@@ -166,7 +166,7 @@ vnode before returning it to the caller.
 .Pp
 For example, imagine mounting a crypto.layer with
 .Bd -literal -offset indent
-mount_crypto.s /usr/include /dev/layer/crypto
+mount_cryptofs /usr/include /dev/layer/crypto
 .Ed
 .Pp
 Changing directory to
