@@ -41,7 +41,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mount_crypto.c	8.6 (Berkeley) 4/26/95";
 #endif
 static const char rcsid[] =
-  "$FreeBSD: releng/10.3/sbin/mount_crypto.s/mount_crypto.s.c 267808 2014-06-23 22:35:41Z rodrigc $";
+  "$FreeBSD: releng/10.3/sbin/mount_cryptofs/mount_cryptofs.c 267808 2014-06-23 22:35:41Z rodrigc $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 	char target[MAXPATHLEN];
 	char errmsg[255];
 	int ch, iovlen;
-	char crypto.s[] = "crypto.s";
+	char cryptofs[] = "cryptofs";
 
 	iov = NULL;
 	iovlen = 0;
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 		errx(EX_USAGE, "%s (%s) and %s are not distinct paths",
 		    argv[0], target, argv[1]);
 
-	build_iovec(&iov, &iovlen, "fstype", crypto.s, (size_t)-1);
+	build_iovec(&iov, &iovlen, "fstype", cryptofs, (size_t)-1);
 	build_iovec(&iov, &iovlen, "fspath", source, (size_t)-1);
 	build_iovec(&iov, &iovlen, "target", target, (size_t)-1);
 	build_iovec(&iov, &iovlen, "errmsg", errmsg, sizeof(errmsg));
@@ -138,6 +138,6 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		"usage: mount_crypto.s [-o options] target mount-point\n");
+		"usage: mount_cryptofs [-o options] target mount-point\n");
 	exit(1);
 }
