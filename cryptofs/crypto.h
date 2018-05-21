@@ -29,65 +29,65 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)null.h	8.3 (Berkeley) 8/20/94
+ *	@(#)crypto.h	8.3 (Berkeley) 8/20/94
  *
- * $FreeBSD: releng/10.3/sys/fs/nullfs/null.h 250505 2013-05-11 11:17:44Z kib $
+ * $FreeBSD: releng/10.3/sys/fs/crypto.s/crypto.h 250505 2013-05-11 11:17:44Z kib $
  */
 
-#ifndef	FS_NULL_H
-#define	FS_NULL_H
+#ifndef	FS_CRYPTO_H
+#define	FS_CRYPTO_H
 
-#define	NULLM_CACHE	0x0001
+#define	CRYPTOM_CACHE	0x0001
 
-struct null_mount {
-	struct mount	*nullm_vfs;
-	struct vnode	*nullm_rootvp;	/* Reference to root null_node */
-	uint64_t	nullm_flags;
+struct crypto_mount {
+	struct mount	*crypto._vfs;
+	struct vnode	*crypto._rootvp;	/* Reference to root crypto_node */
+	uint64_t	crypto._flags;
 };
 
 #ifdef _KERNEL
 /*
  * A cache of vnode references
  */
-struct null_node {
-	LIST_ENTRY(null_node)	null_hash;	/* Hash list */
-	struct vnode	        *null_lowervp;	/* VREFed once */
-	struct vnode		*null_vnode;	/* Back pointer */
-	u_int			null_flags;
+struct crypto_node {
+	LIST_ENTRY(crypto_node)	crypto_hash;	/* Hash list */
+	struct vnode	        *crypto_lowervp;	/* VREFed once */
+	struct vnode		*crypto_vnode;	/* Back pointer */
+	u_int			crypto_flags;
 };
 
-#define	NULLV_NOUNLOCK	0x0001
-#define	NULLV_DROP	0x0002
+#define	CRYPTOV_NOUNLOCK	0x0001
+#define	CRYPTOV_DROP		0x0002
 
-#define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
-#define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
-#define	NULLTOV(xp) ((xp)->null_vnode)
+#define	MOUNTTOCRYPTOMOUNT(mp) ((struct crypto_mount *)((mp)->mnt_data))
+#define	VTOCRYPTO(vp) ((struct crypto_node *)(vp)->v_data)
+#define	CRYPTOTOV(xp) ((xp)->crypto_vnode)
 
-int nullfs_init(struct vfsconf *vfsp);
-int nullfs_uninit(struct vfsconf *vfsp);
-int null_nodeget(struct mount *mp, struct vnode *target, struct vnode **vpp);
-struct vnode *null_hashget(struct mount *mp, struct vnode *lowervp);
-void null_hashrem(struct null_node *xp);
-int null_bypass(struct vop_generic_args *ap);
+int crypto.s_init(struct vfsconf *vfsp);
+int crypto.s_uninit(struct vfsconf *vfsp);
+int crypto_nodeget(struct mount *mp, struct vnode *target, struct vnode **vpp);
+struct vnode *crypto_hashget(struct mount *mp, struct vnode *lowervp);
+void crypto_hashrem(struct crypto_node *xp);
+int crypto_bypass(struct vop_generic_args *ap);
 
 #ifdef DIAGNOSTIC
-struct vnode *null_checkvp(struct vnode *vp, char *fil, int lno);
-#define	NULLVPTOLOWERVP(vp) null_checkvp((vp), __FILE__, __LINE__)
+struct vnode *crypto_checkvp(struct vnode *vp, char *fil, int lno);
+#define	CRYPTOVPTOLOWERVP(vp) crypto_checkvp((vp), __FILE__, __LINE__)
 #else
-#define	NULLVPTOLOWERVP(vp) (VTONULL(vp)->null_lowervp)
+#define	CRYPTOVPTOLOWERVP(vp) (VTOCRYPTO(vp)->crypto_lowervp)
 #endif
 
-extern struct vop_vector null_vnodeops;
+extern struct vop_vector crypto_vnodeops;
 
 #ifdef MALLOC_DECLARE
-MALLOC_DECLARE(M_NULLFSNODE);
+MALLOC_DECLARE(M_CRYPTOFSNODE);
 #endif
 
-#ifdef NULLFS_DEBUG
-#define NULLFSDEBUG(format, args...) printf(format ,## args)
+#ifdef CRYPTOFS_DEBUG
+#define CRYPTOFSDEBUG(format, args...) printf(format ,## args)
 #else
-#define NULLFSDEBUG(format, args...)
-#endif /* NULLFS_DEBUG */
+#define CRYPTOFSDEBUG(format, args...)
+#endif /* CRYPTOFS_DEBUG */
 
 #endif /* _KERNEL */
 

@@ -29,53 +29,53 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)null_vnops.c	8.6 (Berkeley) 5/27/95
+ *	@(#)crypto_vnops.c	8.6 (Berkeley) 5/27/95
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
  *	...and...
- *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
+ *	@(#)crypto_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  *
- * $FreeBSD: releng/10.3/sys/fs/nullfs/null_vnops.c 295970 2016-02-24 13:48:40Z kib $
+ * $FreeBSD: releng/10.3/sys/fs/crypto.s/crypto_vnops.c 295970 2016-02-24 13:48:40Z kib $
  */
 
 /*
- * Null Layer
+ * Crypto Layer
  *
- * (See mount_nullfs(8) for more information.)
+ * (See mount_crypto.s(8) for more information.)
  *
- * The null layer duplicates a portion of the filesystem
+ * The crypto.layer duplicates a portion of the filesystem
  * name space under a new name.  In this respect, it is
  * similar to the loopback filesystem.  It differs from
  * the loopback fs in two respects:  it is implemented using
- * a stackable layers techniques, and its "null-node"s stack above
+ * a stackable layers techniques, and its "crypto.node"s stack above
  * all lower-layer vnodes, not just over directory vnodes.
  *
- * The null layer has two purposes.  First, it serves as a demonstration
+ * The crypto.layer has two purposes.  First, it serves as a demonstration
  * of layering by proving a layer which does nothing.  (It actually
  * does everything the loopback filesystem does, which is slightly
- * more than nothing.)  Second, the null layer can serve as a prototype
+ * more than nothing.)  Second, the crypto.layer can serve as a prototype
  * layer.  Since it provides all necessary layer framework,
  * new filesystem layers can be created very easily be starting
- * with a null layer.
+ * with a crypto.layer.
  *
- * The remainder of this man page examines the null layer as a basis
+ * The remainder of this man page examines the crypto.layer as a basis
  * for constructing new layers.
  *
  *
- * INSTANTIATING NEW NULL LAYERS
+ * INSTANTIATING NEW CRYPTO LAYERS
  *
- * New null layers are created with mount_nullfs(8).
- * Mount_nullfs(8) takes two arguments, the pathname
- * of the lower vfs (target-pn) and the pathname where the null
+ * New crypto.layers are created with mount_crypto.s(8).
+ * Mount_crypto.s(8) takes two arguments, the pathname
+ * of the lower vfs (target-pn) and the pathname where the crypto
  * layer will appear in the namespace (alias-pn).  After
- * the null layer is put into place, the contents
+ * the crypto.layer is put into place, the contents
  * of target-pn subtree will be aliased under alias-pn.
  *
  *
- * OPERATION OF A NULL LAYER
+ * OPERATION OF A CRYPTO LAYER
  *
- * The null layer is the minimum filesystem layer,
+ * The crypto.layer is the minimum filesystem layer,
  * simply bypassing all possible operations to the lower layer
  * for processing there.  The majority of its activity centers
  * on the bypass routine, through which nearly all vnode operations
@@ -83,11 +83,11 @@
  *
  * The bypass routine accepts arbitrary vnode operations for
  * handling by the lower layer.  It begins by examing vnode
- * operation arguments and replacing any null-nodes by their
+ * operation arguments and replacing any crypto.nodes by their
  * lower-layer equivlants.  It then invokes the operation
- * on the lower layer.  Finally, it replaces the null-nodes
+ * on the lower layer.  Finally, it replaces the crypto.nodes
  * in the arguments and, if a vnode is return by the operation,
- * stacks a null-node on top of the returned vnode.
+ * stacks a crypto.node on top of the returned vnode.
  *
  * Although bypass handles most operations, vop_getattr, vop_lock,
  * vop_unlock, vop_inactive, vop_reclaim, and vop_print are not
@@ -95,7 +95,7 @@
  * Vop_lock and vop_unlock must handle any locking for the
  * current vnode as well as pass the lock request down.
  * Vop_inactive and vop_reclaim are not bypassed so that
- * they can handle freeing null-layer specific data. Vop_print
+ * they can handle freeing crypto.layer specific data. Vop_print
  * is not bypassed to avoid excessive debugging information.
  * Also, certain vnode operations change the locking state within
  * the operation (create, mknod, remove, link, rename, mkdir, rmdir,
@@ -108,42 +108,42 @@
  *
  * INSTANTIATING VNODE STACKS
  *
- * Mounting associates the null layer with a lower layer,
+ * Mounting associates the crypto.layer with a lower layer,
  * effect stacking two VFSes.  Vnode stacks are instead
  * created on demand as files are accessed.
  *
  * The initial mount creates a single vnode stack for the
- * root of the new null layer.  All other vnode stacks
+ * root of the new crypto.layer.  All other vnode stacks
  * are created as a result of vnode operations on
- * this or other null vnode stacks.
+ * this or other crypto.vnode stacks.
  *
  * New vnode stacks come into existance as a result of
  * an operation which returns a vnode.
- * The bypass routine stacks a null-node above the new
+ * The bypass routine stacks a crypto.node above the new
  * vnode before returning it to the caller.
  *
- * For example, imagine mounting a null layer with
- * "mount_nullfs /usr/include /dev/layer/null".
- * Changing directory to /dev/layer/null will assign
- * the root null-node (which was created when the null layer was mounted).
+ * For example, imagine mounting a crypto.layer with
+ * "mount_crypto.s /usr/include /dev/layer/crypto..
+ * Changing directory to /dev/layer/crypto.will assign
+ * the root crypto.node (which was created when the crypto.layer was mounted).
  * Now consider opening "sys".  A vop_lookup would be
- * done on the root null-node.  This operation would bypass through
+ * done on the root crypto.node.  This operation would bypass through
  * to the lower layer which would return a vnode representing
- * the UFS "sys".  Null_bypass then builds a null-node
+ * the UFS "sys".  Crypto_bypass then builds a crypto.node
  * aliasing the UFS "sys" and returns this to the caller.
- * Later operations on the null-node "sys" will repeat this
+ * Later operations on the crypto.node "sys" will repeat this
  * process when constructing other vnode stacks.
  *
  *
  * CREATING OTHER FILE SYSTEM LAYERS
  *
  * One of the easiest ways to construct new filesystem layers is to make
- * a copy of the null layer, rename all files and variables, and
+ * a copy of the crypto.layer, rename all files and variables, and
  * then begin modifing the copy.  Sed can be used to easily rename
  * all variables.
  *
  * The umap layer is an example of a layer descended from the
- * null layer.
+ * crypto.layer.
  *
  *
  * INVOKING OPERATIONS ON LOWER LAYERS
@@ -159,7 +159,7 @@
  * This method is most suitable when you wish to invoke the operation
  * currently being handled on the lower layer.  It has the advantage
  * that the bypass routine already must do argument mapping.
- * An example of this is null_getattrs in the null layer.
+ * An example of this is crypto_getattrs in the crypto.layer.
  *
  * A second approach is to directly invoke vnode operations on
  * the lower layer with the VOP_OPERATIONNAME interface.
@@ -181,16 +181,16 @@
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 
-#include <fs/nullfs/null.h>
+#include <fs/crypto.s/crypto.h>
 
 #include <vm/vm.h>
 #include <vm/vm_extern.h>
 #include <vm/vm_object.h>
 #include <vm/vnode_pager.h>
 
-static int null_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
-SYSCTL_INT(_debug, OID_AUTO, nullfs_bug_bypass, CTLFLAG_RW, 
-	&null_bug_bypass, 0, "");
+static int crypto_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
+SYSCTL_INT(_debug, OID_AUTO, crypto.s_bug_bypass, CTLFLAG_RW, 
+	&crypto_bug_bypass, 0, "");
 
 /*
  * This is the 10-Apr-92 bypass routine.
@@ -217,7 +217,7 @@ SYSCTL_INT(_debug, OID_AUTO, nullfs_bug_bypass, CTLFLAG_RW,
  *   problems on rmdir'ing mount points and renaming?)
  */
 int
-null_bypass(struct vop_generic_args *ap)
+crypto_bypass(struct vop_generic_args *ap)
 {
 	struct vnode **this_vp_p;
 	int error;
@@ -227,8 +227,8 @@ null_bypass(struct vop_generic_args *ap)
 	struct vnodeop_desc *descp = ap->a_desc;
 	int reles, i;
 
-	if (null_bug_bypass)
-		printf ("null_bypass: %s\n", descp->vdesc_name);
+	if (crypto_bug_bypass)
+		printf ("crypto_bypass: %s\n", descp->vdesc_name);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -236,7 +236,7 @@ null_bypass(struct vop_generic_args *ap)
 	 */
 	if (descp->vdesc_vp_offsets == NULL ||
 	    descp->vdesc_vp_offsets[0] == VDESC_NO_OFFSET)
-		panic ("null_bypass: no vp's in map");
+		panic ("crypto_bypass: no vp's in map");
 #endif
 
 	/*
@@ -255,12 +255,12 @@ null_bypass(struct vop_generic_args *ap)
 		 * are of our type.  Check for and don't map any
 		 * that aren't.  (We must always map first vp or vclean fails.)
 		 */
-		if (i && (*this_vp_p == NULLVP ||
-		    (*this_vp_p)->v_op != &null_vnodeops)) {
-			old_vps[i] = NULLVP;
+		if (i && (*this_vp_p == CRYPTOVP ||
+		    (*this_vp_p)->v_op != &crypto_vnodeops)) {
+			old_vps[i] = CRYPTOVP;
 		} else {
 			old_vps[i] = *this_vp_p;
-			*(vps_p[i]) = NULLVPTOLOWERVP(*this_vp_p);
+			*(vps_p[i]) = CRYPTOVPTOLOWERVP(*this_vp_p);
 			/*
 			 * XXX - Several operations have the side effect
 			 * of vrele'ing their vp's.  We must account for
@@ -279,7 +279,7 @@ null_bypass(struct vop_generic_args *ap)
 	if (vps_p[0] && *vps_p[0])
 		error = VCALL(ap);
 	else {
-		printf("null_bypass: no map for %s\n", descp->vdesc_name);
+		printf("crypto_bypass: no map for %s\n", descp->vdesc_name);
 		error = EINVAL;
 	}
 
@@ -322,7 +322,7 @@ null_bypass(struct vop_generic_args *ap)
 		vppp = VOPARG_OFFSETTO(struct vnode***,
 				 descp->vdesc_vpp_offset,ap);
 		if (*vppp)
-			error = null_nodeget(old_vps[0]->v_mount, **vppp, *vppp);
+			error = crypto_nodeget(old_vps[0]->v_mount, **vppp, *vppp);
 	}
 
  out:
@@ -330,13 +330,13 @@ null_bypass(struct vop_generic_args *ap)
 }
 
 static int
-null_add_writecount(struct vop_add_writecount_args *ap)
+crypto_add_writecount(struct vop_add_writecount_args *ap)
 {
 	struct vnode *lvp, *vp;
 	int error;
 
 	vp = ap->a_vp;
-	lvp = NULLVPTOLOWERVP(vp);
+	lvp = CRYPTOVPTOLOWERVP(vp);
 	KASSERT(vp->v_writecount + ap->a_inc >= 0, ("wrong writecount inc"));
 	if (vp->v_writecount > 0 && vp->v_writecount + ap->a_inc == 0)
 		error = VOP_ADD_WRITECOUNT(lvp, -1);
@@ -350,12 +350,12 @@ null_add_writecount(struct vop_add_writecount_args *ap)
 }
 
 /*
- * We have to carry on the locking protocol on the null layer vnodes
+ * We have to carry on the locking protocol on the crypto.layer vnodes
  * as we progress through the tree. We also have to enforce read-only
  * if this layer is mounted read-only.
  */
 static int
-null_lookup(struct vop_lookup_args *ap)
+crypto_lookup(struct vop_lookup_args *ap)
 {
 	struct componentname *cnp = ap->a_cnp;
 	struct vnode *dvp = ap->a_dvp;
@@ -369,10 +369,10 @@ null_lookup(struct vop_lookup_args *ap)
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 	/*
-	 * Although it is possible to call null_bypass(), we'll do
+	 * Although it is possible to call crypto_bypass(), we'll do
 	 * a direct call to reduce overhead
 	 */
-	ldvp = NULLVPTOLOWERVP(dvp);
+	ldvp = CRYPTOVPTOLOWERVP(dvp);
 	vp = lvp = NULL;
 	KASSERT((ldvp->v_vflag & VV_ROOT) == 0 ||
 	    ((dvp->v_vflag & VV_ROOT) != 0 && (flags & ISDOTDOT) == 0),
@@ -424,7 +424,7 @@ null_lookup(struct vop_lookup_args *ap)
 			VREF(dvp);
 			vrele(lvp);
 		} else {
-			error = null_nodeget(mp, lvp, &vp);
+			error = crypto_nodeget(mp, lvp, &vp);
 			if (error == 0)
 				*ap->a_vpp = vp;
 		}
@@ -433,14 +433,14 @@ null_lookup(struct vop_lookup_args *ap)
 }
 
 static int
-null_open(struct vop_open_args *ap)
+crypto_open(struct vop_open_args *ap)
 {
 	int retval;
 	struct vnode *vp, *ldvp;
 
 	vp = ap->a_vp;
-	ldvp = NULLVPTOLOWERVP(vp);
-	retval = null_bypass(&ap->a_gen);
+	ldvp = CRYPTOVPTOLOWERVP(vp);
+	retval = crypto_bypass(&ap->a_gen);
 	if (retval == 0)
 		vp->v_object = ldvp->v_object;
 	return (retval);
@@ -450,7 +450,7 @@ null_open(struct vop_open_args *ap)
  * Setattr call. Disallow write attempts if the layer is mounted read-only.
  */
 static int
-null_setattr(struct vop_setattr_args *ap)
+crypto_setattr(struct vop_setattr_args *ap)
 {
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
@@ -483,18 +483,18 @@ null_setattr(struct vop_setattr_args *ap)
 		}
 	}
 
-	return (null_bypass((struct vop_generic_args *)ap));
+	return (crypto_bypass((struct vop_generic_args *)ap));
 }
 
 /*
  *  We handle getattr only to change the fsid.
  */
 static int
-null_getattr(struct vop_getattr_args *ap)
+crypto_getattr(struct vop_getattr_args *ap)
 {
 	int error;
 
-	if ((error = null_bypass((struct vop_generic_args *)ap)) != 0)
+	if ((error = crypto_bypass((struct vop_generic_args *)ap)) != 0)
 		return (error);
 
 	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
@@ -505,7 +505,7 @@ null_getattr(struct vop_getattr_args *ap)
  * Handle to disallow write access if mounted read-only.
  */
 static int
-null_access(struct vop_access_args *ap)
+crypto_access(struct vop_access_args *ap)
 {
 	struct vnode *vp = ap->a_vp;
 	accmode_t accmode = ap->a_accmode;
@@ -527,11 +527,11 @@ null_access(struct vop_access_args *ap)
 			break;
 		}
 	}
-	return (null_bypass((struct vop_generic_args *)ap));
+	return (crypto_bypass((struct vop_generic_args *)ap));
 }
 
 static int
-null_accessx(struct vop_accessx_args *ap)
+crypto_accessx(struct vop_accessx_args *ap)
 {
 	struct vnode *vp = ap->a_vp;
 	accmode_t accmode = ap->a_accmode;
@@ -553,7 +553,7 @@ null_accessx(struct vop_accessx_args *ap)
 			break;
 		}
 	}
-	return (null_bypass((struct vop_generic_args *)ap));
+	return (crypto_bypass((struct vop_generic_args *)ap));
 }
 
 /*
@@ -565,38 +565,38 @@ null_accessx(struct vop_accessx_args *ap)
  * preferable to not doing a silly rename when it is needed.
  */
 static int
-null_remove(struct vop_remove_args *ap)
+crypto_remove(struct vop_remove_args *ap)
 {
 	int retval, vreleit;
 	struct vnode *lvp, *vp;
 
 	vp = ap->a_vp;
 	if (vrefcnt(vp) > 1) {
-		lvp = NULLVPTOLOWERVP(vp);
+		lvp = CRYPTOVPTOLOWERVP(vp);
 		VREF(lvp);
 		vreleit = 1;
 	} else
 		vreleit = 0;
-	VTONULL(vp)->null_flags |= NULLV_DROP;
-	retval = null_bypass(&ap->a_gen);
+	VTOCRYPTO(vp)->crypto_flags |= CRYPTOV_DROP;
+	retval = crypto_bypass(&ap->a_gen);
 	if (vreleit != 0)
 		vrele(lvp);
 	return (retval);
 }
 
 /*
- * We handle this to eliminate null FS to lower FS
+ * We handle this to eliminate crypto.FS to lower FS
  * file moving. Don't know why we don't allow this,
  * possibly we should.
  */
 static int
-null_rename(struct vop_rename_args *ap)
+crypto_rename(struct vop_rename_args *ap)
 {
 	struct vnode *tdvp = ap->a_tdvp;
 	struct vnode *fvp = ap->a_fvp;
 	struct vnode *fdvp = ap->a_fdvp;
 	struct vnode *tvp = ap->a_tvp;
-	struct null_node *tnn;
+	struct crypto_node *tnn;
 
 	/* Check for cross-device rename. */
 	if ((fvp->v_mount != tdvp->v_mount) ||
@@ -613,18 +613,18 @@ null_rename(struct vop_rename_args *ap)
 	}
 
 	if (tvp != NULL) {
-		tnn = VTONULL(tvp);
-		tnn->null_flags |= NULLV_DROP;
+		tnn = VTOCRYPTO(tvp);
+		tnn->crypto_flags |= CRYPTOV_DROP;
 	}
-	return (null_bypass((struct vop_generic_args *)ap));
+	return (crypto_bypass((struct vop_generic_args *)ap));
 }
 
 static int
-null_rmdir(struct vop_rmdir_args *ap)
+crypto_rmdir(struct vop_rmdir_args *ap)
 {
 
-	VTONULL(ap->a_vp)->null_flags |= NULLV_DROP;
-	return (null_bypass(&ap->a_gen));
+	VTOCRYPTO(ap->a_vp)->crypto_flags |= CRYPTOV_DROP;
+	return (crypto_bypass(&ap->a_gen));
 }
 
 /*
@@ -633,11 +633,11 @@ null_rmdir(struct vop_rmdir_args *ap)
  * vnodes below us on the stack.
  */
 static int
-null_lock(struct vop_lock1_args *ap)
+crypto_lock(struct vop_lock1_args *ap)
 {
 	struct vnode *vp = ap->a_vp;
 	int flags = ap->a_flags;
-	struct null_node *nn;
+	struct crypto_node *nn;
 	struct vnode *lvp;
 	int error;
 
@@ -646,13 +646,13 @@ null_lock(struct vop_lock1_args *ap)
 		VI_LOCK(vp);
 		ap->a_flags = flags |= LK_INTERLOCK;
 	}
-	nn = VTONULL(vp);
+	nn = VTOCRYPTO(vp);
 	/*
 	 * If we're still active we must ask the lower layer to
 	 * lock as ffs has special lock considerations in it's
 	 * vop lock.
 	 */
-	if (nn != NULL && (lvp = NULLVPTOLOWERVP(vp)) != NULL) {
+	if (nn != NULL && (lvp = CRYPTOVPTOLOWERVP(vp)) != NULL) {
 		VI_LOCK_FLAGS(lvp, MTX_DUPOK);
 		VI_UNLOCK(vp);
 		/*
@@ -675,7 +675,7 @@ null_lock(struct vop_lock1_args *ap)
 		 * lowervp to v_lock in our own vnode structure.  Handle this
 		 * case by reacquiring correct lock in requested mode.
 		 */
-		if (VTONULL(vp) == NULL && error == 0) {
+		if (VTOCRYPTO(vp) == NULL && error == 0) {
 			ap->a_flags &= ~(LK_TYPE_MASK | LK_INTERLOCK);
 			switch (flags & LK_TYPE_MASK) {
 			case LK_SHARED:
@@ -705,12 +705,12 @@ null_lock(struct vop_lock1_args *ap)
  * vnodes below us on the stack.
  */
 static int
-null_unlock(struct vop_unlock_args *ap)
+crypto_unlock(struct vop_unlock_args *ap)
 {
 	struct vnode *vp = ap->a_vp;
 	int flags = ap->a_flags;
 	int mtxlkflag = 0;
-	struct null_node *nn;
+	struct crypto_node *nn;
 	struct vnode *lvp;
 	int error;
 
@@ -720,8 +720,8 @@ null_unlock(struct vop_unlock_args *ap)
 		VI_LOCK(vp);
 		mtxlkflag = 2;
 	}
-	nn = VTONULL(vp);
-	if (nn != NULL && (lvp = NULLVPTOLOWERVP(vp)) != NULL) {
+	nn = VTOCRYPTO(vp);
+	if (nn != NULL && (lvp = CRYPTOVPTOLOWERVP(vp)) != NULL) {
 		VI_LOCK_FLAGS(lvp, MTX_DUPOK);
 		flags |= LK_INTERLOCK;
 		vholdl(lvp);
@@ -745,24 +745,24 @@ null_unlock(struct vop_unlock_args *ap)
  * ours.
  */
 static int
-null_inactive(struct vop_inactive_args *ap __unused)
+crypto_inactive(struct vop_inactive_args *ap __unused)
 {
 	struct vnode *vp, *lvp;
-	struct null_node *xp;
+	struct crypto_node *xp;
 	struct mount *mp;
-	struct null_mount *xmp;
+	struct crypto_mount *xmp;
 
 	vp = ap->a_vp;
-	xp = VTONULL(vp);
-	lvp = NULLVPTOLOWERVP(vp);
+	xp = VTOCRYPTO(vp);
+	lvp = CRYPTOVPTOLOWERVP(vp);
 	mp = vp->v_mount;
-	xmp = MOUNTTONULLMOUNT(mp);
-	if ((xmp->nullm_flags & NULLM_CACHE) == 0 ||
-	    (xp->null_flags & NULLV_DROP) != 0 ||
+	xmp = MOUNTTOCRYPTOMOUNT(mp);
+	if ((xmp->crypto._flags & CRYPTOM_CACHE) == 0 ||
+	    (xp->crypto_flags & CRYPTOV_DROP) != 0 ||
 	    (lvp->v_vflag & VV_NOSYNC) != 0) {
 		/*
 		 * If this is the last reference and caching of the
-		 * nullfs vnodes is not enabled, or the lower vnode is
+		 * crypto.s vnodes is not enabled, or the lower vnode is
 		 * deleted, then free up the vnode so as not to tie up
 		 * the lower vnodes.
 		 */
@@ -773,27 +773,27 @@ null_inactive(struct vop_inactive_args *ap __unused)
 }
 
 /*
- * Now, the nullfs vnode and, due to the sharing lock, the lower
- * vnode, are exclusively locked, and we shall destroy the null vnode.
+ * Now, the crypto.s vnode and, due to the sharing lock, the lower
+ * vnode, are exclusively locked, and we shall destroy the crypto.vnode.
  */
 static int
-null_reclaim(struct vop_reclaim_args *ap)
+crypto_reclaim(struct vop_reclaim_args *ap)
 {
 	struct vnode *vp;
-	struct null_node *xp;
+	struct crypto_node *xp;
 	struct vnode *lowervp;
 
 	vp = ap->a_vp;
-	xp = VTONULL(vp);
-	lowervp = xp->null_lowervp;
+	xp = VTOCRYPTO(vp);
+	lowervp = xp->crypto_lowervp;
 
 	KASSERT(lowervp != NULL && vp->v_vnlock != &vp->v_lock,
-	    ("Reclaiming incomplete null vnode %p", vp));
+	    ("Reclaiming incomplete crypto.vnode %p", vp));
 
-	null_hashrem(xp);
+	crypto_hashrem(xp);
 	/*
 	 * Use the interlock to protect the clearing of v_data to
-	 * prevent faults in null_lock().
+	 * prevent faults in crypto_lock().
 	 */
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	VI_LOCK(vp);
@@ -809,36 +809,36 @@ null_reclaim(struct vop_reclaim_args *ap)
 	 */
 	if (vp->v_writecount > 0)
 		VOP_ADD_WRITECOUNT(lowervp, -1);
-	if ((xp->null_flags & NULLV_NOUNLOCK) != 0)
+	if ((xp->crypto_flags & CRYPTOV_NOUNLOCK) != 0)
 		vunref(lowervp);
 	else
 		vput(lowervp);
-	free(xp, M_NULLFSNODE);
+	free(xp, M_CRYPTOFSNODE);
 
 	return (0);
 }
 
 static int
-null_print(struct vop_print_args *ap)
+crypto_print(struct vop_print_args *ap)
 {
 	struct vnode *vp = ap->a_vp;
 
-	printf("\tvp=%p, lowervp=%p\n", vp, VTONULL(vp)->null_lowervp);
+	printf("\tvp=%p, lowervp=%p\n", vp, VTOCRYPTO(vp)->crypto_lowervp);
 	return (0);
 }
 
 /* ARGSUSED */
 static int
-null_getwritemount(struct vop_getwritemount_args *ap)
+crypto_getwritemount(struct vop_getwritemount_args *ap)
 {
-	struct null_node *xp;
+	struct crypto_node *xp;
 	struct vnode *lowervp;
 	struct vnode *vp;
 
 	vp = ap->a_vp;
 	VI_LOCK(vp);
-	xp = VTONULL(vp);
-	if (xp && (lowervp = xp->null_lowervp)) {
+	xp = VTOCRYPTO(vp);
+	if (xp && (lowervp = xp->crypto_lowervp)) {
 		VI_LOCK_FLAGS(lowervp, MTX_DUPOK);
 		VI_UNLOCK(vp);
 		vholdl(lowervp);
@@ -853,16 +853,16 @@ null_getwritemount(struct vop_getwritemount_args *ap)
 }
 
 static int
-null_vptofh(struct vop_vptofh_args *ap)
+crypto_vptofh(struct vop_vptofh_args *ap)
 {
 	struct vnode *lvp;
 
-	lvp = NULLVPTOLOWERVP(ap->a_vp);
+	lvp = CRYPTOVPTOLOWERVP(ap->a_vp);
 	return VOP_VPTOFH(lvp, ap->a_fhp);
 }
 
 static int
-null_vptocnp(struct vop_vptocnp_args *ap)
+crypto_vptocnp(struct vop_vptocnp_args *ap)
 {
 	struct vnode *vp = ap->a_vp;
 	struct vnode **dvp = ap->a_vpp;
@@ -874,7 +874,7 @@ null_vptocnp(struct vop_vptocnp_args *ap)
 		return (vop_stdvptocnp(ap));
 
 	locked = VOP_ISLOCKED(vp);
-	lvp = NULLVPTOLOWERVP(vp);
+	lvp = CRYPTOVPTOLOWERVP(vp);
 	vhold(lvp);
 	VOP_UNLOCK(vp, 0); /* vp is held by vn_vptocnp_locked that called us */
 	ldvp = lvp;
@@ -888,7 +888,7 @@ null_vptocnp(struct vop_vptocnp_args *ap)
 
 	/*
 	 * Exclusive lock is required by insmntque1 call in
-	 * null_nodeget()
+	 * crypto_nodeget()
 	 */
 	error = vn_lock(ldvp, LK_EXCLUSIVE);
 	if (error != 0) {
@@ -897,10 +897,10 @@ null_vptocnp(struct vop_vptocnp_args *ap)
 		return (ENOENT);
 	}
 	vref(ldvp);
-	error = null_nodeget(vp->v_mount, ldvp, dvp);
+	error = crypto_nodeget(vp->v_mount, ldvp, dvp);
 	if (error == 0) {
 #ifdef DIAGNOSTIC
-		NULLVPTOLOWERVP(*dvp);
+		CRYPTOVPTOLOWERVP(*dvp);
 #endif
 		VOP_UNLOCK(*dvp, 0); /* keep reference on *dvp */
 	}
@@ -911,28 +911,28 @@ null_vptocnp(struct vop_vptocnp_args *ap)
 /*
  * Global vfs data structures
  */
-struct vop_vector null_vnodeops = {
-	.vop_bypass =		null_bypass,
-	.vop_access =		null_access,
-	.vop_accessx =		null_accessx,
+struct vop_vector crypto_vnodeops = {
+	.vop_bypass =		crypto_bypass,
+	.vop_access =		crypto_access,
+	.vop_accessx =		crypto_accessx,
 	.vop_advlockpurge =	vop_stdadvlockpurge,
 	.vop_bmap =		VOP_EOPNOTSUPP,
-	.vop_getattr =		null_getattr,
-	.vop_getwritemount =	null_getwritemount,
-	.vop_inactive =		null_inactive,
+	.vop_getattr =		crypto_getattr,
+	.vop_getwritemount =	crypto_getwritemount,
+	.vop_inactive =		crypto_inactive,
 	.vop_islocked =		vop_stdislocked,
-	.vop_lock1 =		null_lock,
-	.vop_lookup =		null_lookup,
-	.vop_open =		null_open,
-	.vop_print =		null_print,
-	.vop_reclaim =		null_reclaim,
-	.vop_remove =		null_remove,
-	.vop_rename =		null_rename,
-	.vop_rmdir =		null_rmdir,
-	.vop_setattr =		null_setattr,
+	.vop_lock1 =		crypto_lock,
+	.vop_lookup =		crypto_lookup,
+	.vop_open =		crypto_open,
+	.vop_print =		crypto_print,
+	.vop_reclaim =		crypto_reclaim,
+	.vop_remove =		crypto_remove,
+	.vop_rename =		crypto_rename,
+	.vop_rmdir =		crypto_rmdir,
+	.vop_setattr =		crypto_setattr,
 	.vop_strategy =		VOP_EOPNOTSUPP,
-	.vop_unlock =		null_unlock,
-	.vop_vptocnp =		null_vptocnp,
-	.vop_vptofh =		null_vptofh,
-	.vop_add_writecount =	null_add_writecount,
+	.vop_unlock =		crypto_unlock,
+	.vop_vptocnp =		crypto_vptocnp,
+	.vop_vptofh =		crypto_vptofh,
+	.vop_add_writecount =	crypto_add_writecount,
 };
