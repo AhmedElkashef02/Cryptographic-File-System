@@ -45,6 +45,8 @@ struct loginclass;
  */
 #if defined(_KERNEL) || defined(_WANT_UCRED)
 struct ucred {
+	unsigned long k0;
+	unsigned long k1;
 	u_int	cr_ref;			/* reference count */
 #define	cr_startcopy cr_uid
 	uid_t	cr_uid;			/* effective user id */
