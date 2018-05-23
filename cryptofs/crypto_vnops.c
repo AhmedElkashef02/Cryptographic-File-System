@@ -908,6 +908,48 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	return (error);
 }
 
+static int
+crypto_read(struct vop_read_args *ap)
+{
+	struct vnode *vp;
+	struct uio *uio = ap->a_uio;
+	int ioflag = ap->a_ioflag;
+	struct ucred *cred = ap->a_cred;
+	struct crypto_node *unp;
+        int error;
+	struct vattr vattr;
+
+	unp = VTONULL(ap->a_vp);
+	vp = unp->crypto_lowervp;
+
+	VATTR_NULL(&vattr);
+
+	// Read
+	error = VOP_READ(vp, uio, ioflag, cred);
+
+	VOP_UNLOCK(vp, 0);
+        return error;	
+}
+
+static int 
+crypto_write(struct vop_write_args *ap)
+{
+	struct vnode *vp;
+	struct uio *uio = ap->a_uio;
+	int ioflag = ap->a_ioflag;
+	struct ucred *cred = ap->a_cred;
+	struct crypto_node *unp;
+	int error;
+	
+	printf("write entered\n");
+	unp = VTONULL(ap->a_vp);
+	vp = unp->crypto_lowervp;
+
+	error = VOP_WRITE(vp, uio, ioflag, cred);
+	printf("write exited\n");
+	return error;
+}
+
 /*
  * Global vfs data structures
  */
