@@ -5,6 +5,7 @@ rm -r /sys/fs/cryptofs && rm -r /usr/src/sbin/mount_cryptofs && rm -r /sys/modul
 && cp -r crypto2/cryptofs /sys/modules/ \
 && cp Making/Makefile /usr/src/sbin/ \
 && make -C /usr/src/sbin/ && make install -C /usr/src/sbin/ \
+&& rm /sys/sys/jail.h && cp jail/jail.h /sys/sys/ \
 #&& cp sys_skey.c /sys/kern/ \
 #&& rm /sys/kern/syscalls.master && cp syscalls.master /sys/kern/ \
 #&& rm /sys/conf/files /usr/src/lib/libc/sys/Symbol.map \
