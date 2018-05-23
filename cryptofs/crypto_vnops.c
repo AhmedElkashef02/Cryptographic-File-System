@@ -908,46 +908,41 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 	return (error);
 }
 
+//Assignment
 static int
 crypto_read(struct vop_read_args *ap)
 {
-	struct vnode *vp;
-	struct uio *uio = ap->a_uio;
-	int ioflag = ap->a_ioflag;
-	struct ucred *cred = ap->a_cred;
-	struct crypto_node *unp;
-        int error;
-	struct vattr vattr;
-
-	unp = VTONULL(ap->a_vp);
-	vp = unp->crypto_lowervp;
-
-	VATTR_NULL(&vattr);
-
-	// Read
-	error = VOP_READ(vp, uio, ioflag, cred);
-
-	VOP_UNLOCK(vp, 0);
-        return error;	
+  int out;
+  struct vnode *vp, *lvp;
+  struct uio *uio;
+  int ioflag = ap->a_ioflag;
+  struct ucred *cred;
+  vp = ap->a_vp;
+  uio= ap->a_uio;
+  cred = ap->a_cred;
+  lvp = CRYPTOVPTOLOWERVP(vp);
+  out = VOP_READ(lvp, uio, ioflag, cred);
+  printf("FILE READ CRYPTO");
+  return(out);  
 }
 
-static int 
+static int
 crypto_write(struct vop_write_args *ap)
 {
-	struct vnode *vp;
-	struct uio *uio = ap->a_uio;
-	int ioflag = ap->a_ioflag;
-	struct ucred *cred = ap->a_cred;
-	struct crypto_node *unp;
-	int error;
-	
-	printf("write entered\n");
-	unp = VTONULL(ap->a_vp);
-	vp = unp->crypto_lowervp;
-
-	error = VOP_WRITE(vp, uio, ioflag, cred);
-	printf("write exited\n");
-	return error;
+  int out;
+  struct vnode *vp, *lvp;
+  struct uio *uio;
+  int ioflag = ap->a_ioflag;
+  struct ucred *cred;
+  vp = ap->a_vp;
+  uio= ap->a_uio;
+  cred = ap->a_cred;
+  lvp = CRYPTOVPTOLOWERVP(vp);
+  printf("WRITE CRYPTO START");
+  out = VOP_WRITE(lvp, uio, ioflag, cred);
+  printf("WRITE CRYPTO END");
+  return (out);
+  
 }
 
 /*
@@ -977,4 +972,6 @@ struct vop_vector crypto_vnodeops = {
 	.vop_vptocnp =		crypto_vptocnp,
 	.vop_vptofh =		crypto_vptofh,
 	.vop_add_writecount =	crypto_add_writecount,
+	.vop_read =		crypto_read,
+	.vop_write = 		crypto_write,
 };
