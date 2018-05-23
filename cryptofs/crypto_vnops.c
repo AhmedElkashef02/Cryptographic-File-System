@@ -36,46 +36,46 @@
  *	...and...
  *	@(#)crypto_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  *
- * $FreeBSD: releng/10.3/sys/fs/crypto.s/crypto_vnops.c 295970 2016-02-24 13:48:40Z kib $
+ * $FreeBSD: releng/10.3/sys/fs/cryptofs/crypto_vnops.c 295970 2016-02-24 13:48:40Z kib $
  */
 
 /*
- * Crypto Layer
+ * crypto Layer
  *
- * (See mount_crypto.s(8) for more information.)
+ * (See mount_cryptofs(8) for more information.)
  *
- * The crypto.layer duplicates a portion of the filesystem
+ * The crypto layer duplicates a portion of the filesystem
  * name space under a new name.  In this respect, it is
  * similar to the loopback filesystem.  It differs from
  * the loopback fs in two respects:  it is implemented using
- * a stackable layers techniques, and its "crypto.node"s stack above
+ * a stackable layers techniques, and its "crypto-node"s stack above
  * all lower-layer vnodes, not just over directory vnodes.
  *
- * The crypto.layer has two purposes.  First, it serves as a demonstration
+ * The crypto layer has two purposes.  First, it serves as a demonstration
  * of layering by proving a layer which does nothing.  (It actually
  * does everything the loopback filesystem does, which is slightly
- * more than nothing.)  Second, the crypto.layer can serve as a prototype
+ * more than nothing.)  Second, the crypto layer can serve as a prototype
  * layer.  Since it provides all necessary layer framework,
  * new filesystem layers can be created very easily be starting
- * with a crypto.layer.
+ * with a crypto layer.
  *
- * The remainder of this man page examines the crypto.layer as a basis
+ * The remainder of this man page examines the crypto layer as a basis
  * for constructing new layers.
  *
  *
- * INSTANTIATING NEW CRYPTO LAYERS
+ * INSTANTIATING NEW crypto LAYERS
  *
- * New crypto.layers are created with mount_crypto.s(8).
- * Mount_crypto.s(8) takes two arguments, the pathname
+ * New crypto layers are created with mount_cryptofs(8).
+ * Mount_cryptofs(8) takes two arguments, the pathname
  * of the lower vfs (target-pn) and the pathname where the crypto
  * layer will appear in the namespace (alias-pn).  After
- * the crypto.layer is put into place, the contents
+ * the crypto layer is put into place, the contents
  * of target-pn subtree will be aliased under alias-pn.
  *
  *
- * OPERATION OF A CRYPTO LAYER
+ * OPERATION OF A crypto LAYER
  *
- * The crypto.layer is the minimum filesystem layer,
+ * The crypto layer is the minimum filesystem layer,
  * simply bypassing all possible operations to the lower layer
  * for processing there.  The majority of its activity centers
  * on the bypass routine, through which nearly all vnode operations
@@ -83,11 +83,11 @@
  *
  * The bypass routine accepts arbitrary vnode operations for
  * handling by the lower layer.  It begins by examing vnode
- * operation arguments and replacing any crypto.nodes by their
+ * operation arguments and replacing any crypto-nodes by their
  * lower-layer equivlants.  It then invokes the operation
- * on the lower layer.  Finally, it replaces the crypto.nodes
+ * on the lower layer.  Finally, it replaces the crypto-nodes
  * in the arguments and, if a vnode is return by the operation,
- * stacks a crypto.node on top of the returned vnode.
+ * stacks a crypto-node on top of the returned vnode.
  *
  * Although bypass handles most operations, vop_getattr, vop_lock,
  * vop_unlock, vop_inactive, vop_reclaim, and vop_print are not
@@ -95,7 +95,7 @@
  * Vop_lock and vop_unlock must handle any locking for the
  * current vnode as well as pass the lock request down.
  * Vop_inactive and vop_reclaim are not bypassed so that
- * they can handle freeing crypto.layer specific data. Vop_print
+ * they can handle freeing crypto-layer specific data. Vop_print
  * is not bypassed to avoid excessive debugging information.
  * Also, certain vnode operations change the locking state within
  * the operation (create, mknod, remove, link, rename, mkdir, rmdir,
@@ -108,42 +108,42 @@
  *
  * INSTANTIATING VNODE STACKS
  *
- * Mounting associates the crypto.layer with a lower layer,
+ * Mounting associates the crypto layer with a lower layer,
  * effect stacking two VFSes.  Vnode stacks are instead
  * created on demand as files are accessed.
  *
  * The initial mount creates a single vnode stack for the
- * root of the new crypto.layer.  All other vnode stacks
+ * root of the new crypto layer.  All other vnode stacks
  * are created as a result of vnode operations on
- * this or other crypto.vnode stacks.
+ * this or other crypto vnode stacks.
  *
  * New vnode stacks come into existance as a result of
  * an operation which returns a vnode.
- * The bypass routine stacks a crypto.node above the new
+ * The bypass routine stacks a crypto-node above the new
  * vnode before returning it to the caller.
  *
- * For example, imagine mounting a crypto.layer with
- * "mount_crypto.s /usr/include /dev/layer/crypto..
- * Changing directory to /dev/layer/crypto.will assign
- * the root crypto.node (which was created when the crypto.layer was mounted).
+ * For example, imagine mounting a crypto layer with
+ * "mount_cryptofs /usr/include /dev/layer/crypto".
+ * Changing directory to /dev/layer/crypto will assign
+ * the root crypto-node (which was created when the crypto layer was mounted).
  * Now consider opening "sys".  A vop_lookup would be
- * done on the root crypto.node.  This operation would bypass through
+ * done on the root crypto-node.  This operation would bypass through
  * to the lower layer which would return a vnode representing
- * the UFS "sys".  Crypto_bypass then builds a crypto.node
+ * the UFS "sys".  crypto_bypass then builds a crypto-node
  * aliasing the UFS "sys" and returns this to the caller.
- * Later operations on the crypto.node "sys" will repeat this
+ * Later operations on the crypto-node "sys" will repeat this
  * process when constructing other vnode stacks.
  *
  *
  * CREATING OTHER FILE SYSTEM LAYERS
  *
  * One of the easiest ways to construct new filesystem layers is to make
- * a copy of the crypto.layer, rename all files and variables, and
+ * a copy of the crypto layer, rename all files and variables, and
  * then begin modifing the copy.  Sed can be used to easily rename
  * all variables.
  *
  * The umap layer is an example of a layer descended from the
- * crypto.layer.
+ * crypto layer.
  *
  *
  * INVOKING OPERATIONS ON LOWER LAYERS
@@ -159,7 +159,7 @@
  * This method is most suitable when you wish to invoke the operation
  * currently being handled on the lower layer.  It has the advantage
  * that the bypass routine already must do argument mapping.
- * An example of this is crypto_getattrs in the crypto.layer.
+ * An example of this is crypto_getattrs in the crypto layer.
  *
  * A second approach is to directly invoke vnode operations on
  * the lower layer with the VOP_OPERATIONNAME interface.
@@ -181,7 +181,7 @@
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
 
-#include <fs/crypto.s/crypto.h>
+#include <fs/cryptofs/crypto.h>
 
 #include <vm/vm.h>
 #include <vm/vm_extern.h>
@@ -189,7 +189,7 @@
 #include <vm/vnode_pager.h>
 
 static int crypto_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
-SYSCTL_INT(_debug, OID_AUTO, crypto.s_bug_bypass, CTLFLAG_RW, 
+SYSCTL_INT(_debug, OID_AUTO, cryptofs_bug_bypass, CTLFLAG_RW, 
 	&crypto_bug_bypass, 0, "");
 
 /*
@@ -350,7 +350,7 @@ crypto_add_writecount(struct vop_add_writecount_args *ap)
 }
 
 /*
- * We have to carry on the locking protocol on the crypto.layer vnodes
+ * We have to carry on the locking protocol on the crypto layer vnodes
  * as we progress through the tree. We also have to enforce read-only
  * if this layer is mounted read-only.
  */
@@ -585,7 +585,7 @@ crypto_remove(struct vop_remove_args *ap)
 }
 
 /*
- * We handle this to eliminate crypto.FS to lower FS
+ * We handle this to eliminate crypto FS to lower FS
  * file moving. Don't know why we don't allow this,
  * possibly we should.
  */
@@ -757,12 +757,12 @@ crypto_inactive(struct vop_inactive_args *ap __unused)
 	lvp = CRYPTOVPTOLOWERVP(vp);
 	mp = vp->v_mount;
 	xmp = MOUNTTOCRYPTOMOUNT(mp);
-	if ((xmp->crypto._flags & CRYPTOM_CACHE) == 0 ||
+	if ((xmp->cryptom_flags & CRYPTOM_CACHE) == 0 ||
 	    (xp->crypto_flags & CRYPTOV_DROP) != 0 ||
 	    (lvp->v_vflag & VV_NOSYNC) != 0) {
 		/*
 		 * If this is the last reference and caching of the
-		 * crypto.s vnodes is not enabled, or the lower vnode is
+		 * cryptofs vnodes is not enabled, or the lower vnode is
 		 * deleted, then free up the vnode so as not to tie up
 		 * the lower vnodes.
 		 */
@@ -773,8 +773,8 @@ crypto_inactive(struct vop_inactive_args *ap __unused)
 }
 
 /*
- * Now, the crypto.s vnode and, due to the sharing lock, the lower
- * vnode, are exclusively locked, and we shall destroy the crypto.vnode.
+ * Now, the cryptofs vnode and, due to the sharing lock, the lower
+ * vnode, are exclusively locked, and we shall destroy the crypto vnode.
  */
 static int
 crypto_reclaim(struct vop_reclaim_args *ap)
@@ -788,7 +788,7 @@ crypto_reclaim(struct vop_reclaim_args *ap)
 	lowervp = xp->crypto_lowervp;
 
 	KASSERT(lowervp != NULL && vp->v_vnlock != &vp->v_lock,
-	    ("Reclaiming incomplete crypto.vnode %p", vp));
+	    ("Reclaiming incomplete crypto vnode %p", vp));
 
 	crypto_hashrem(xp);
 	/*
