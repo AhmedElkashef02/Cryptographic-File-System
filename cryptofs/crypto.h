@@ -31,7 +31,7 @@
  *
  *	@(#)crypto.h	8.3 (Berkeley) 8/20/94
  *
- * $FreeBSD: releng/10.3/sys/fs/crypto.s/crypto.h 250505 2013-05-11 11:17:44Z kib $
+ * $FreeBSD: releng/10.3/sys/fs/cryptofs/crypto.h 250505 2013-05-11 11:17:44Z kib $
  */
 
 #ifndef	FS_CRYPTO_H
@@ -40,9 +40,9 @@
 #define	CRYPTOM_CACHE	0x0001
 
 struct crypto_mount {
-	struct mount	*crypto._vfs;
-	struct vnode	*crypto._rootvp;	/* Reference to root crypto_node */
-	uint64_t	crypto._flags;
+	struct mount	*cryptom_vfs;
+	struct vnode	*cryptom_rootvp;	/* Reference to root crypto_node */
+	uint64_t	cryptom_flags;
 };
 
 #ifdef _KERNEL
@@ -57,14 +57,14 @@ struct crypto_node {
 };
 
 #define	CRYPTOV_NOUNLOCK	0x0001
-#define	CRYPTOV_DROP		0x0002
+#define	CRYPTOV_DROP	0x0002
 
 #define	MOUNTTOCRYPTOMOUNT(mp) ((struct crypto_mount *)((mp)->mnt_data))
 #define	VTOCRYPTO(vp) ((struct crypto_node *)(vp)->v_data)
 #define	CRYPTOTOV(xp) ((xp)->crypto_vnode)
 
-int crypto.s_init(struct vfsconf *vfsp);
-int crypto.s_uninit(struct vfsconf *vfsp);
+int cryptofs_init(struct vfsconf *vfsp);
+int cryptofs_uninit(struct vfsconf *vfsp);
 int crypto_nodeget(struct mount *mp, struct vnode *target, struct vnode **vpp);
 struct vnode *crypto_hashget(struct mount *mp, struct vnode *lowervp);
 void crypto_hashrem(struct crypto_node *xp);
