@@ -29,9 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)crypto.subr.c	8.7 (Berkeley) 5/14/95
+ *	@(#)crypto_subr.c	8.7 (Berkeley) 5/14/95
  *
- * $FreeBSD: releng/10.3/sys/fs/crypto.s/crypto.subr.c 250505 2013-05-11 11:17:44Z kib $
+ * $FreeBSD: releng/10.3/sys/fs/cryptofs/crypto_subr.c 250505 2013-05-11 11:17:44Z kib $
  */
 
 #include <sys/param.h>
@@ -44,48 +44,48 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 
-#include <fs/crypto.s/crypto.h>
+#include <fs/cryptofs/crypto.h>
 
 /*
- * Crypto layer cache:
+ * crypto layer cache:
  * Each cache entry holds a reference to the lower vnode
  * along with a pointer to the alias vnode.  When an
  * entry is added the lower vnode is VREF'd.  When the
  * alias is removed the lower vnode is vrele'd.
  */
 
-#define	CRYPTO_NHASH(vp) (&crypto.node_hashtbl[vfs_hash_index(vp) & crypto.hash_mask])
+#define	CRYPTO_NHASH(vp) (&crypto_node_hashtbl[vfs_hash_index(vp) & crypto_hash_mask])
 
-static LIST_HEAD(crypto.node_hashhead, crypto.node) *crypto.node_hashtbl;
-static struct mtx crypto.hashmtx;
-static u_long crypto.hash_mask;
+static LIST_HEAD(crypto_node_hashhead, crypto_node) *crypto_node_hashtbl;
+static struct mtx crypto_hashmtx;
+static u_long crypto_hash_mask;
 
-static MALLOC_DEFINE(M_CRYPTOFSHASH, "crypto.s_hash", "CRYPTOFS hash table");
-MALLOC_DEFINE(M_CRYPTOFSNODE, "crypto.s_node", "CRYPTOFS vnode private part");
+static MALLOC_DEFINE(M_CRYPTOFSHASH, "cryptofs_hash", "CRYPTOFS hash table");
+MALLOC_DEFINE(M_CRYPTOFSNODE, "cryptofs_node", "CRYPTOFS vnode private part");
 
-static struct vnode * crypto.hashins(struct mount *, struct crypto.node *);
+static struct vnode * crypto_hashins(struct mount *, struct crypto_node *);
 
 /*
  * Initialise cache headers
  */
 int
-crypto.s_init(vfsp)
+cryptofs_init(vfsp)
 	struct vfsconf *vfsp;
 {
 
-	crypto.node_hashtbl = hashinit(desiredvnodes, M_CRYPTOFSHASH,
-	    &crypto.hash_mask);
-	mtx_init(&crypto.hashmtx, "crypto.s", NULL, MTX_DEF);
+	crypto_node_hashtbl = hashinit(desiredvnodes, M_CRYPTOFSHASH,
+	    &crypto_hash_mask);
+	mtx_init(&crypto_hashmtx, "cryptohs", NULL, MTX_DEF);
 	return (0);
 }
 
 int
-crypto.s_uninit(vfsp)
+cryptofs_uninit(vfsp)
 	struct vfsconf *vfsp;
 {
 
-	mtx_destroy(&crypto.hashmtx);
-	hashdestroy(crypto.node_hashtbl, M_CRYPTOFSHASH, crypto.hash_mask);
+	mtx_destroy(&crypto_hashmtx);
+	hashdestroy(crypto_node_hashtbl, M_CRYPTOFSHASH, crypto_hash_mask);
 	return (0);
 }
 
@@ -94,77 +94,77 @@ crypto.s_uninit(vfsp)
  * Lower vnode should be locked on entry and will be left locked on exit.
  */
 struct vnode *
-crypto.hashget(mp, lowervp)
+crypto_hashget(mp, lowervp)
 	struct mount *mp;
 	struct vnode *lowervp;
 {
-	struct crypto.node_hashhead *hd;
-	struct crypto.node *a;
+	struct crypto_node_hashhead *hd;
+	struct crypto_node *a;
 	struct vnode *vp;
 
-	ASSERT_VOP_LOCKED(lowervp, "crypto.hashget");
+	ASSERT_VOP_LOCKED(lowervp, "crypto_hashget");
 
 	/*
 	 * Find hash base, and then search the (two-way) linked
-	 * list looking for a crypto.node structure which is referencing
-	 * the lower vnode.  If found, the increment the crypto.node
+	 * list looking for a crypto_node structure which is referencing
+	 * the lower vnode.  If found, the increment the crypto_node
 	 * reference count (but NOT the lower vnode's VREF counter).
 	 */
 	hd = CRYPTO_NHASH(lowervp);
-	mtx_lock(&crypto.hashmtx);
-	LIST_FOREACH(a, hd, crypto.hash) {
-		if (a->crypto.lowervp == lowervp && CRYPTOTOV(a)->v_mount == mp) {
+	mtx_lock(&crypto_hashmtx);
+	LIST_FOREACH(a, hd, crypto_hash) {
+		if (a->crypto_lowervp == lowervp && CRYPTOTOV(a)->v_mount == mp) {
 			/*
-			 * Since we have the lower node locked the crypto.s
+			 * Since we have the lower node locked the cryptofs
 			 * node can not be in the process of recycling.  If
 			 * it had been recycled before we grabed the lower
 			 * lock it would not have been found on the hash.
 			 */
 			vp = CRYPTOTOV(a);
 			vref(vp);
-			mtx_unlock(&crypto.hashmtx);
+			mtx_unlock(&crypto_hashmtx);
 			return (vp);
 		}
 	}
-	mtx_unlock(&crypto.hashmtx);
+	mtx_unlock(&crypto_hashmtx);
 	return (CRYPTOVP);
 }
 
 /*
- * Act like crypto.hashget, but add passed crypto.node to hash if no existing
+ * Act like crypto_hashget, but add passed crypto_node to hash if no existing
  * node found.
  */
 static struct vnode *
-crypto.hashins(mp, xp)
+crypto_hashins(mp, xp)
 	struct mount *mp;
-	struct crypto.node *xp;
+	struct crypto_node *xp;
 {
-	struct crypto.node_hashhead *hd;
-	struct crypto.node *oxp;
+	struct crypto_node_hashhead *hd;
+	struct crypto_node *oxp;
 	struct vnode *ovp;
 
-	hd = CRYPTO_NHASH(xp->crypto.lowervp);
-	mtx_lock(&crypto.hashmtx);
-	LIST_FOREACH(oxp, hd, crypto.hash) {
-		if (oxp->crypto.lowervp == xp->crypto.lowervp &&
+	hd = CRYPTO_NHASH(xp->crypto_lowervp);
+	mtx_lock(&crypto_hashmtx);
+	LIST_FOREACH(oxp, hd, crypto_hash) {
+		if (oxp->crypto_lowervp == xp->crypto_lowervp &&
 		    CRYPTOTOV(oxp)->v_mount == mp) {
 			/*
-			 * See crypto.hashget for a description of this
+			 * See crypto_hashget for a description of this
 			 * operation.
 			 */
 			ovp = CRYPTOTOV(oxp);
 			vref(ovp);
-			mtx_unlock(&crypto.hashmtx);
+			mtx_unlock(&crypto_hashmtx);
 			return (ovp);
 		}
 	}
-	LIST_INSERT_HEAD(hd, xp, crypto.hash);
-	mtx_unlock(&crypto.hashmtx);
+	LIST_INSERT_HEAD(hd, xp, crypto_hash);
+	mtx_unlock(&crypto_hashmtx);
 	return (CRYPTOVP);
 }
 
 static void
-crypto.destroy_proto(struct vnode *vp, void *xp)
+crypto_destroy_proto(struct vnode *vp, void *xp)
 {
 
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
@@ -179,28 +179,28 @@ crypto.destroy_proto(struct vnode *vp, void *xp)
 }
 
 static void
-crypto.insmntque_dtr(struct vnode *vp, void *xp)
+crypto_insmntque_dtr(struct vnode *vp, void *xp)
 {
 
-	vput(((struct crypto.node *)xp)->crypto.lowervp);
-	crypto.destroy_proto(vp, xp);
+	vput(((struct crypto_node *)xp)->crypto_lowervp);
+	crypto_destroy_proto(vp, xp);
 }
 
 /*
- * Make a new or get existing crypto.s node.
+ * Make a new or get existing cryptofs node.
  * Vp is the alias vnode, lowervp is the lower vnode.
  * 
  * The lowervp assumed to be locked and having "spare" reference. This routine
- * vrele lowervp if crypto.s node was taken from hash. Otherwise it "transfers"
- * the caller's "spare" reference to created crypto.s vnode.
+ * vrele lowervp if cryptofs node was taken from hash. Otherwise it "transfers"
+ * the caller's "spare" reference to created cryptofs vnode.
  */
 int
-crypto.nodeget(mp, lowervp, vpp)
+crypto_nodeget(mp, lowervp, vpp)
 	struct mount *mp;
 	struct vnode *lowervp;
 	struct vnode **vpp;
 {
-	struct crypto.node *xp;
+	struct crypto_node *xp;
 	struct vnode *vp;
 	int error;
 
@@ -208,7 +208,7 @@ crypto.nodeget(mp, lowervp, vpp)
 	KASSERT(lowervp->v_usecount >= 1, ("Unreferenced vnode %p", lowervp));
 
 	/* Lookup the hash firstly. */
-	*vpp = crypto.hashget(mp, lowervp);
+	*vpp = crypto_hashget(mp, lowervp);
 	if (*vpp != NULL) {
 		vrele(lowervp);
 		return (0);
@@ -216,11 +216,11 @@ crypto.nodeget(mp, lowervp, vpp)
 
 	/*
 	 * The insmntque1() call below requires the exclusive lock on
-	 * the crypto.s vnode.  Upgrade the lock now if hash failed to
+	 * the cryptofs vnode.  Upgrade the lock now if hash failed to
 	 * provide ready to use vnode.
 	 */
 	if (VOP_ISLOCKED(lowervp) != LK_EXCLUSIVE) {
-		KASSERT((MOUNTTOCRYPTOMOUNT(mp)->crypto._flags & CRYPTOM_CACHE) != 0,
+		KASSERT((MOUNTTOcryptoMOUNT(mp)->cryptom_flags & CRYPTOM_CACHE) != 0,
 		    ("lowervp %p is not excl locked and cache is disabled",
 		    lowervp));
 		vn_lock(lowervp, LK_UPGRADE | LK_RETRY);
@@ -236,32 +236,32 @@ crypto.nodeget(mp, lowervp, vpp)
 	 * Note that duplicate can only appear in hash if the lowervp is
 	 * locked LK_SHARED.
 	 */
-	xp = malloc(sizeof(struct crypto.node), M_CRYPTOFSNODE, M_WAITOK);
+	xp = malloc(sizeof(struct crypto_node), M_CRYPTOFSNODE, M_WAITOK);
 
-	error = getnewvnode("crypto., mp, &crypto.vnodeops, &vp);
+	error = getnewvnode("crypto", mp, &crypto_vnodeops, &vp);
 	if (error) {
 		vput(lowervp);
 		free(xp, M_CRYPTOFSNODE);
 		return (error);
 	}
 
-	xp->crypto.vnode = vp;
-	xp->crypto.lowervp = lowervp;
-	xp->crypto.flags = 0;
+	xp->crypto_vnode = vp;
+	xp->crypto_lowervp = lowervp;
+	xp->crypto_flags = 0;
 	vp->v_type = lowervp->v_type;
 	vp->v_data = xp;
 	vp->v_vnlock = lowervp->v_vnlock;
-	error = insmntque1(vp, mp, crypto.insmntque_dtr, xp);
+	error = insmntque1(vp, mp, crypto_insmntque_dtr, xp);
 	if (error != 0)
 		return (error);
 	/*
 	 * Atomically insert our new node into the hash or vget existing 
 	 * if someone else has beaten us to it.
 	 */
-	*vpp = crypto.hashins(mp, xp);
+	*vpp = crypto_hashins(mp, xp);
 	if (*vpp != NULL) {
 		vrele(lowervp);
-		crypto.destroy_proto(vp, xp);
+		crypto_destroy_proto(vp, xp);
 		return (0);
 	}
 	*vpp = vp;
@@ -273,50 +273,50 @@ crypto.nodeget(mp, lowervp, vpp)
  * Remove node from hash.
  */
 void
-crypto.hashrem(xp)
-	struct crypto.node *xp;
+crypto_hashrem(xp)
+	struct crypto_node *xp;
 {
 
-	mtx_lock(&crypto.hashmtx);
-	LIST_REMOVE(xp, crypto.hash);
-	mtx_unlock(&crypto.hashmtx);
+	mtx_lock(&crypto_hashmtx);
+	LIST_REMOVE(xp, crypto_hash);
+	mtx_unlock(&crypto_hashmtx);
 }
 
 #ifdef DIAGNOSTIC
 
 struct vnode *
-crypto.checkvp(vp, fil, lno)
+crypto_checkvp(vp, fil, lno)
 	struct vnode *vp;
 	char *fil;
 	int lno;
 {
-	struct crypto.node *a = VTOCRYPTO(vp);
+	struct crypto_node *a = VTOCRYPTO(vp);
 
 #ifdef notyet
 	/*
 	 * Can't do this check because vop_reclaim runs
 	 * with a funny vop vector.
 	 */
-	if (vp->v_op != crypto.vnodeop_p) {
-		printf ("crypto.checkvp: on non-crypto.node\n");
-		panic("crypto.checkvp");
+	if (vp->v_op != crypto_vnodeop_p) {
+		printf ("crypto_checkvp: on non-crypto-node\n");
+		panic("crypto_checkvp");
 	}
 #endif
-	if (a->crypto.lowervp == CRYPTOVP) {
+	if (a->crypto_lowervp == CRYPTOVP) {
 		/* Should never happen */
-		panic("crypto.checkvp %p", vp);
+		panic("crypto_checkvp %p", vp);
 	}
-	VI_LOCK_FLAGS(a->crypto.lowervp, MTX_DUPOK);
-	if (a->crypto.lowervp->v_usecount < 1)
-		panic ("crypto.with unref'ed lowervp, vp %p lvp %p",
-		    vp, a->crypto.lowervp);
-	VI_UNLOCK(a->crypto.lowervp);
+	VI_LOCK_FLAGS(a->crypto_lowervp, MTX_DUPOK);
+	if (a->crypto_lowervp->v_usecount < 1)
+		panic ("crypto with unref'ed lowervp, vp %p lvp %p",
+		    vp, a->crypto_lowervp);
+	VI_UNLOCK(a->crypto_lowervp);
 #ifdef notyet
-	printf("crypto.%x/%d -> %x/%d [%s, %d]\n",
+	printf("crypto %x/%d -> %x/%d [%s, %d]\n",
 	        CRYPTOTOV(a), vrefcnt(CRYPTOTOV(a)),
-		a->crypto.lowervp, vrefcnt(a->crypto.lowervp),
+		a->crypto_lowervp, vrefcnt(a->crypto_lowervp),
 		fil, lno);
 #endif
-	return (a->crypto.lowervp);
+	return (a->crypto_lowervp);
 }
 #endif
