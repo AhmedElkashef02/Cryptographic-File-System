@@ -2,11 +2,11 @@
 rm -r /sys/fs/cryptofs && rm -r /usr/src/sbin/mount_cryptofs && rm -r /sys/modules/cryptfs \
 && cp -r cryptofs /sys/fs/ \
 && cp -r mount_cryptofs /usr/src/sbin/ \
-&& cp -r cryptfs /sys/modules/ \
+&& cp -r crypto2/cryptofs /sys/modules/ \
 && cp Making/Makefile /usr/src/sbin/ \
 && make -C /usr/src/sbin/ && make install -C /usr/src/sbin/ \
-&& cp sys_skey.c /sys/kern/ \
-&& rm /sys/kern/syscalls.master && cp syscalls.master /sys/kern/ \
-&& rm /sys/conf/files /usr/src/lib/libc/sys/Symbol.map \
-&& cp sysCallFiles/files /sys/conf/ \
-&& cp Symbol.map /usr/src/lib/libc/sys/ \
+#&& cp sys_skey.c /sys/kern/ \
+#&& rm /sys/kern/syscalls.master && cp syscalls.master /sys/kern/ \
+#&& rm /sys/conf/files /usr/src/lib/libc/sys/Symbol.map \
+#&& cp sysCallFiles/files /sys/conf/ \
+#&& cp Symbol.map /usr/src/lib/libc/sys/ \
