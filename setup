@@ -7,3 +7,4 @@ rm -r /sys/modules/cryptofs \
 && make -C /usr/src/sbin/ && make install -C /usr/src/sbin/ \
 && rm /sys/sys/jail.h && cp jail/jail.h /sys/sys/ \
 && rm /sys/sys/vnode.h && cp vnode/vnode.h /sys/sys/ \
+&& rm /usr/src/sys/modules/Makefile && cp makeFileForModules/Makefile /usr/src/sys/modules/ \
