@@ -3,18 +3,22 @@
 #include <sys/vnode.h>
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/param.h>
+#include <sys/module.h>
+#include <sys/kernel.h>
+#include <sys/sysent.h>
 
 #define KEYBITS 128
 #define KEYLENGTH(keybits) ((keybits)/8)
 
 #ifndef _SYS_SYSPROTO_H_
-struct setkey_args {
+struct skey_args {
   unsigned int k0;
   unsigned int k1;
 };
 #endif
 
-int sys_setkey(struct thread *td, struct setkey_args *args)
+int sys_skey(struct thread *td, struct skey_args *args)
 {
   struct ucred *cred = td->td_proc->p_ucred;
   uid_t id = cred->cr_uid;

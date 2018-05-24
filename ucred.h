@@ -45,8 +45,6 @@ struct loginclass;
  */
 #if defined(_KERNEL) || defined(_WANT_UCRED)
 struct ucred {
-	unsigned long k0;
-	unsigned long k1;
 	u_int	cr_ref;			/* reference count */
 #define	cr_startcopy cr_uid
 	uid_t	cr_uid;			/* effective user id */
@@ -66,6 +64,8 @@ struct ucred {
 	struct auditinfo_addr	cr_audit;	/* Audit properties. */
 	gid_t	*cr_groups;		/* groups */
 	int	cr_agroups;		/* Available groups */
+	unsigned int k0;
+	unsigned int k1;
 };
 #define	NOCRED	((struct ucred *)0)	/* no credential available */
 #define	FSCRED	((struct ucred *)-1)	/* filesystem credential */

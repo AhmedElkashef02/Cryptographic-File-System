@@ -12,7 +12,7 @@ rm -r /sys/modules/cryptofs \
 #&& cp vnode/vnode.h /sys/sys/ \
 #&& rm /usr/src/sys/modules/Makefile \
 #&& cp makeFileForModules/Makefile /usr/src/sys/modules/ \
-&& rm /sys/kern/syscalls.master \
+rm /sys/kern/syscalls.master \
 && cp syscalls.master /sys/kern/ \
 && make sysent -C /usr/src/sys/kern/ \
 && rm /sys/kern/sys_skey.c \
