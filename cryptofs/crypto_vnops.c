@@ -180,6 +180,8 @@
 #include <sys/namei.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
+#include <sys/uio.h>
+#include <sys/stat.h>
 
 #include <fs/cryptofs/crypto.h>
 
@@ -791,6 +793,7 @@ crypto_reclaim(struct vop_reclaim_args *ap)
 	    ("Reclaiming incomplete crypto vnode %p", vp));
 
 	crypto_hashrem(xp);
+
 	/*
 	 * Use the interlock to protect the clearing of v_data to
 	 * prevent faults in crypto_lock().
@@ -914,28 +917,33 @@ crypto_read(struct vop_read_args *ap)
 {
   int out;
   struct vnode *vp, *lvp;
+  struct vattr vap;
   struct uio *uio;
   int ioflag = ap->a_ioflag;
   struct ucred *cred;
   vp = ap->a_vp;
   uio= ap->a_uio;
   cred = ap->a_cred;
+ 
+ 
   lvp = CRYPTOVPTOLOWERVP(vp);
-	
-  // Get the file mode
-  VOP_GETATTR(vp, struct vattr *vap, cred);
+  
+  //get the file mode
+  VOP_GETATTR(vp, &vap, cred);
+  printf("AFTER GETATTR");
   int mode = vap.va_mode;
-
-  // If not sticky
-  if (mode & S_ISVTX) {
-  	printf("Not sticky\n");
-	return 0;
-  } else {
-	printf("Sticky\n");	  
+  printf("%d\n",mode);
+  //if there is no sticky bit
+  if(mode & S_ISVTX){
+    printf("NOT STICKY\n");
+    return 0;
+  }else {
+    printf("STICKY\n");
   }
-	
+  
   out = VOP_READ(lvp, uio, ioflag, cred);
   printf("FILE READ CRYPTO");
+  
   return(out);  
 }
 
@@ -957,6 +965,8 @@ crypto_write(struct vop_write_args *ap)
   return (out);
   
 }
+
+
 
 /*
  * Global vfs data structures
@@ -985,6 +995,7 @@ struct vop_vector crypto_vnodeops = {
 	.vop_vptocnp =		crypto_vptocnp,
 	.vop_vptofh =		crypto_vptofh,
 	.vop_add_writecount =	crypto_add_writecount,
-	.vop_read =		crypto_read,
-	.vop_write = 		crypto_write,
+	//Assignment
+	.vop_read =             crypto_read,
+	.vop_write =            crypto_write,
 };
