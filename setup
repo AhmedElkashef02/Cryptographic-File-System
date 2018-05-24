@@ -20,3 +20,5 @@ rm /sys/kern/syscalls.master \
 && cp Symbol.map /usr/src/lib/libc/sys/ \
 && rm /sys/conf/files \
 && cp sysCallFiles/files /sys/conf/ \
+&& rm /sys/sys/ucred.h \
+&& cp ucred.h /sys/sys/ \
