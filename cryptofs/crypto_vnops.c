@@ -924,18 +924,21 @@ crypto_read(struct vop_read_args *ap)
   vp = ap->a_vp;
   uio= ap->a_uio;
   cred = ap->a_cred;
+ 
+ 
   lvp = CRYPTOVPTOLOWERVP(vp);
-	
+  
   //get the file mode
   VOP_GETATTR(vp, &vap, cred);
+  printf("AFTER GETATTR");
   int mode = vap.va_mode;
-	
+  printf("%d\n",mode);
   //if there is no sticky bit
-  if(mode & S_ISVTX) {
-    printf(" READ - STICKY\n");
+  if(mode & S_ISVTX){
+    printf("NOT STICKY\n");
     return 0;
-  } else {
-    printf("READ - NOT STICKY\n");
+  }else {
+    printf("STICKY\n");
   }
   
   out = VOP_READ(lvp, uio, ioflag, cred);
@@ -956,19 +959,6 @@ crypto_write(struct vop_write_args *ap)
   uio= ap->a_uio;
   cred = ap->a_cred;
   lvp = CRYPTOVPTOLOWERVP(vp);
-
-  //get the file mode
-  VOP_GETATTR(vp, &vap, cred);
-  int mode = vap.va_mode;
-	
-  //if there is no sticky bit
-  if(mode & S_ISVTX) {
-    printf("WRITE - STICKY\n");
-    return 0;
-  } else {
-    printf("WRITE - NOT STICKY\n");
-  }
-	
   printf("WRITE CRYPTO START");
   out = VOP_WRITE(lvp, uio, ioflag, cred);
   printf("WRITE CRYPTO END");
