@@ -18,5 +18,7 @@ rm /sys/kern/syscalls.master \
 && rm /sys/kern/sys_skey.c \
 && cp sys_skey.c /sys/kern/ \ 
 && cp Symbol.map /usr/src/lib/libc/sys/ \
-&& rm /sys/conf/files
+&& rm /sys/conf/files \
 && cp sysCallFiles/files /sys/conf/ \
+&& rm /sys/sys/ucred.h \
+&& cp ucred.h /sys/sys/ \
