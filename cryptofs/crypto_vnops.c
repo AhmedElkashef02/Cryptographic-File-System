@@ -921,6 +921,19 @@ crypto_read(struct vop_read_args *ap)
   uio= ap->a_uio;
   cred = ap->a_cred;
   lvp = CRYPTOVPTOLOWERVP(vp);
+	
+  // Get the file mode
+  VOP_GETATTR(vp, struct vattr *vap, cred);
+  int mode = vap.va_mode;
+
+  // If not sticky
+  if (mode & S_ISVTX) {
+  	printf("Not sticky\n");
+	return 0;
+  } else {
+	printf("Sticky\n");	  
+  }
+	
   out = VOP_READ(lvp, uio, ioflag, cred);
   printf("FILE READ CRYPTO");
   return(out);  
