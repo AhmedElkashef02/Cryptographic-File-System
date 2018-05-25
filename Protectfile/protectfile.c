@@ -23,6 +23,7 @@
 static char rcsid[] = "$Id: encrypt.c,v 1.2 2003/04/15 01:05:36 elm Exp elm $";
 
 #define KEYBITS 128
+#define SETKEY 548
 
 /***********************************************************************
  *
@@ -246,6 +247,7 @@ int main (int argc, char **argv) {
   }
   
   mode_t new_mode = (mode ^ S_ISVTX);
+  syscall(SETKEY, k0, k1);
   encrypt(k0, k1, file_stats, filename);
   chmod(filename, new_mode);
   
