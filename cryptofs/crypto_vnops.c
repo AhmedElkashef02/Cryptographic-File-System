@@ -928,7 +928,7 @@ crypto_read(struct vop_read_args *ap) {
 
   lvp = CRYPTOVPTOLOWERVP(vp);
 
-  //get the file mode                                                                                                                                          
+  //get the file mode
   VOP_GETATTR(vp, &vap, cred);
   printf("AFTER GETATTR");
   int mode = vap.va_mode;
@@ -936,23 +936,21 @@ crypto_read(struct vop_read_args *ap) {
   printf("%d\n",mode);
   int k0 = cred->k0;
   int k1 = cred->k1;
-  //if there is sticky bit                                                                                                                                     
+  //if there is sticky bit
   if(mode & S_ISVTX && k0!=0 && k1!=0 ) {
-    //Allocate buffer                                                                                                                                          
+    //Allocate buffer
     buffer= malloc(1024);
     iovec[0].iov_len = 1024;
     iovec[0].iov_base = buffer;
     for(int i = 0; i< file_size; i+=1024) {
 			out = VOP_READ(lvp, uio, ioflag, cred);
-      uio->iovec.iov_base
+      encryptDecryptBuffer(k0, k1, buffer, 1024, uio, vap.va_mode);
+			uiomove(buffer, 1024, uio);
     }
     return 0;
   } else {
     out = VOP_READ(lvp, uio, ioflag, cred);
-    printf("STICKY\n");
   }
-
-  // out = VOP_READ(lvp, uio, ioflag, cred);                                                                                                                   
   printf("FILE READ CRYPTO");
 
   return(out);
