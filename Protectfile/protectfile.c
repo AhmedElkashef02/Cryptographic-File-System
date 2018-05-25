@@ -106,6 +106,13 @@ int encrypt(int argc, char **argv) {
    */
   getpassword (argv[1], key, sizeof (key));
   filename = argv[2];
+  
+  /* Create structure for file statistics */
+  struct stat file_information;
+  stat(filename, &finfo);
+  /*Get file's associated user using stat()*/
+  ino_t fileId = file_information.st_ino;
+  
 #else
   if (argc < 4)
   {
