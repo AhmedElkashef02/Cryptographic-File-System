@@ -966,6 +966,76 @@ crypto_write(struct vop_write_args *ap)
   
 }
 
+int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, struct uio *m_uio, int fileID) {
+	unsigned long rk[RKLENGTH(KEYBITS)]; /* round key */
+	unsigned char key[KEYLENGTH(KEYBITS)]; /* cipher key */
+
+	char buf[100];
+	int i, nbytes, nwritten, ctr;
+	int totalbytes;
+	int k0, k1;
+	int nrounds; /* # of Rijndael rounds */
+	size_t bufferLength = buffer[bufferSize].iov_len;
+
+	unsigned char filedata[16];
+	unsigned char ciphertext[16];
+	unsigned char ctrvalue[16];
+
+	/* Construct the full key */
+	bzero(key, sizeof(key));
+	bcopy (&k0, &(key[0]), sizeof (k0));
+	bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
+
+	/*
+	* Initialize the Rijndael algorithm.  The round key is initialized by this
+	* call from the values passed in key and KEYBITS.
+	*/
+	nrounds = rijndaelSetupEncrypt(rk, key, KEYBITS);
+
+
+	/* Copy entire buffer into a temporary buffer */
+	char temporary[buffer[bufferSize].iov_len];
+	char *bufpnt = buffer[bufferSize].iov_base;
+
+	bzero(temporary, sizeof(temporary));
+	bcopy (&(bufpnt[0]), &(temporary[0]), buffer[bufferSize].iov_len);
+
+	/* fileID goes into bytes 8-11 of the ctrvalue */
+	bcopy (&fileID, &(ctrvalue[8]), sizeof (fileID));
+	int pnt_offset = 0;
+	int to_copy = 0;
+	
+	for (ctr = 0, totalbytes = 0; to_copy <= 0; ctr++, bytes_remaining -= to_copy, pnt_offset += to_copy) {
+	/* Encrypt 16 bytes (128 bits, the blocksize) from the buffer */
+	if (bytes_remaining < 16)
+		to_copy = bytes_remaining;
+	else
+		to_copy = 16;
+		
+		/* Read 16 bytes (128 bits, the blocksize) from the data buffer */
+		bcopy (&(temporary[pnt_offset]), &(filedata[0]), to_copy);
+		
+		/* Set up the CTR value to be encrypted */
+		bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
+		
+		/* Call the encryption routine to encrypt the CTR value */
+		rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
+		
+		/* XOR the result into the file data */
+		for (i = 0; i < nbytes; i++) {
+			filedata[i] ^= ciphertext[i];
+		}
+		
+		/* Copy encrypted data back into buffer */
+		bcopy (&(filedata[0]), &(temporary[pnt_offset]), to_copy);
+		
+		/* Increment the total bytes written */
+		totalbytes += to_copy;
+	}
+	bcopy(&(temporary[0]), buffer[bufferSize].iov_base, buffer[bufferSize].iov_len);
+	return 0;
+}
+
 
 
 /*
