@@ -18,7 +18,6 @@
 #include <sys/vnode.h>
 
 #include "rijndael.h"
-#include "encrypt.c"
 
 static char rcsid[] = "$Id: encrypt.c,v 1.2 2003/04/15 01:05:36 elm Exp elm $";
 
@@ -209,13 +208,14 @@ int main (int argc, char **argv) {
       decryptionFlag = 1;
       break;
     default:
-      // check if there are no flags
+      // if there are no flags, display error and exit
+      printf("please specify a flag.\n");
       return 1;
   }
   
   //check if the arguments are 4
   if (argc != 4) {
-    printf("You either didn't specify a flag, or didn't provide enough parameters.\n");
+    printf("please provide enough parameters.\n");
     return 1;
   }
   
