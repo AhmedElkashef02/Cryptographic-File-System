@@ -1041,16 +1041,19 @@ crypto_write(struct vop_write_args *ap) {
 
   int out;
   struct vnode *vp, *lvp;
+  struct vattr vap;
   struct uio *uio;
   int ioflag = ap->a_ioflag;
   struct ucred *cred;
+  struct iovec iovec[1];
+  void *buffer;
   vp = ap->a_vp;
   uio= ap->a_uio;
   cred = ap->a_cred;
 
   lvp = CRYPTOVPTOLOWERVP(vp);
 
-	//get the file mode
+  //get the file mode
   VOP_GETATTR(vp, &vap, cred);
   printf("AFTER GETATTR");
   int mode = vap.va_mode;
