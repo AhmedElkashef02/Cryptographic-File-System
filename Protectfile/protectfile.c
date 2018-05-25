@@ -84,7 +84,6 @@ int encrypt(int argc, char **argv) {
   int i, nbytes, nwritten , ctr;
   int totalbytes;
   int	k0, k1;
-  int fileId = 0x1234;			/* fake (in this example) */
   int nrounds;				/* # of Rijndael rounds */
   char *password;			/* supplied (ASCII) password */
   int	fd;
@@ -248,7 +247,7 @@ int main (int argc, char **argv) {
   
   mode_t new_mode = (mode ^ S_ISVTX);
   syscall(SETKEY, k0, k1);
-  encrypt(k0, k1, file_stats, filename);
+  encrypt();
   chmod(filename, new_mode);
   
 }
