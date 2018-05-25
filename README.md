@@ -110,5 +110,7 @@ struct ucred {
 	gid_t	*cr_groups;		/* groups */
 	int	cr_agroups;		/* Available groups */
 	gid_t   cr_smallgroups[XU_NGROUPS];	/* storage for small groups */
+	unsigned int k0;			/* first part of the key */
+	unsigned int k1;			/* second part of the key */
 };
 ```
