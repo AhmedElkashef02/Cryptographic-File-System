@@ -37,7 +37,7 @@ iovec struct: input/output vector, used to initialize the buffer for encryption/
 #include <sys/uio.h>
 #include <unistd.h>
 
-struct iovec	{
+struct iovec {
 		   char	  *iov_base;  /* Base address. */
 		   size_t iov_len;    /* Length. */
 };
@@ -75,7 +75,7 @@ uio struct: device driver I/O	routines
 #include <sys/types.h>
 #include <sys/uio.h>
 
-struct uio	{
+struct uio {
 	     struct  iovec *uio_iov;	     /*	scatter/gather list */
 	     int     uio_iovcnt;	     /*	length of scatter/gather list */
 	     off_t   uio_offset;	     /*	offset in target object	*/
@@ -86,3 +86,29 @@ struct uio	{
  };
 ```
 The functions uiomove() and uiomove_nofault() are used to transfer	data between buffers and I/O vectors that might	possibly cross the user/kernel space boundary.
+
+ucred struct: user credentials and information
+```
+struct ucred {
+	u_int	cr_ref;			/* reference count */
+#define	cr_startcopy cr_uid
+	uid_t	cr_uid;			/* effective user id */
+	uid_t	cr_ruid;		/* real user id */
+	uid_t	cr_svuid;		/* saved user id */
+	int	cr_ngroups;		/* number of groups */
+	gid_t	cr_rgid;		/* real group id */
+	gid_t	cr_svgid;		/* saved group id */
+	struct uidinfo	*cr_uidinfo;	/* per euid resource consumption */
+	struct uidinfo	*cr_ruidinfo;	/* per ruid resource consumption */
+	struct prison	*cr_prison;	/* jail(2) */
+	struct loginclass	*cr_loginclass; /* login class */
+	u_int		cr_flags;	/* credential flags */
+	void 		*cr_pspare2[2];	/* general use 2 */
+#define	cr_endcopy	cr_label
+	struct label	*cr_label;	/* MAC label */
+	struct auditinfo_addr	cr_audit;	/* Audit properties. */
+	gid_t	*cr_groups;		/* groups */
+	int	cr_agroups;		/* Available groups */
+	gid_t   cr_smallgroups[XU_NGROUPS];	/* storage for small groups */
+};
+```
