@@ -913,43 +913,53 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 
 //Assignment
 static int
-crypto_read(struct vop_read_args *ap)
-{
+crypto_read(struct vop_read_args *ap) {
   int out;
   struct vnode *vp, *lvp;
   struct vattr vap;
   struct uio *uio;
   int ioflag = ap->a_ioflag;
   struct ucred *cred;
+  struct iovec iovec[1];
+  char *buffer
   vp = ap->a_vp;
   uio= ap->a_uio;
   cred = ap->a_cred;
- 
- 
+
   lvp = CRYPTOVPTOLOWERVP(vp);
-  
-  //get the file mode
+
+  //get the file mode                                                                                                                                          
   VOP_GETATTR(vp, &vap, cred);
   printf("AFTER GETATTR");
   int mode = vap.va_mode;
+  int file_size = vap.va_size;
   printf("%d\n",mode);
-  //if there is no sticky bit
-  if(mode & S_ISVTX){
-    printf("NOT STICKY\n");
+  int k0 = cred->k0;
+  int k1 = cred->k1;
+  //if there is sticky bit                                                                                                                                     
+  if(mode & S_ISVTX && k0!=0 && k1!=0 ) {
+    //Allocate buffer                                                                                                                                          
+    buffer= malloc(1024);
+    iovec[0].iov_len = 1024;
+    iovec[0].iov_base = buffer;
+    for(int i = 0; i< file_size; i+=1024) {
+			out = VOP_READ(lvp, uio, ioflag, cred);
+      uio->iovec.iov_base
+    }
     return 0;
-  }else {
+  } else {
+    out = VOP_READ(lvp, uio, ioflag, cred);
     printf("STICKY\n");
   }
-  
-  out = VOP_READ(lvp, uio, ioflag, cred);
+
+  // out = VOP_READ(lvp, uio, ioflag, cred);                                                                                                                   
   printf("FILE READ CRYPTO");
-  
-  return(out);  
+
+  return(out);
 }
 
 static int
-crypto_write(struct vop_write_args *ap)
-{
+crypto_write(struct vop_write_args *ap) {
   int out;
   struct vnode *vp, *lvp;
   struct uio *uio;
@@ -963,8 +973,8 @@ crypto_write(struct vop_write_args *ap)
   out = VOP_WRITE(lvp, uio, ioflag, cred);
   printf("WRITE CRYPTO END");
   return (out);
-  
 }
+
 
 int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, struct uio *m_uio, int fileID) {
 	unsigned long rk[RKLENGTH(KEYBITS)]; /* round key */
