@@ -77,8 +77,7 @@ getpassword (const char *password, unsigned char *key, int keylen)
   }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
   unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
   char	buf[100];
