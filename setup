@@ -1,16 +1,5 @@
 #! /bin/sh
-cp -r cryptofs /sys/fs/ \
-&& cp -r mount_cryptofs /usr/src/sbin/ \
-&& cp -r crypto2/cryptofs /sys/modules/ \
-&& cp Making/Makefile /usr/src/sbin/ \
-&& make -C /usr/src/sbin/ \
-&& make install -C /usr/src/sbin/ \
-&& cp jail/jail.h /sys/sys/ \
-&& cp vnode/vnode.h /sys/sys/ \
-&& cp makeFileForModules/Makefile /usr/src/sys/modules/ \
-&& cp syscalls.master /sys/kern/ \
-&& cp sys_skey.c /sys/kern/ \ 
-&& cp Symbol.map /usr/src/lib/libc/sys/ \
-&& cp sysCallFiles/files /sys/conf/ \
-&& cp ucred.h /sys/sys/ \
+cp -r cryptofs /sys/fs/ && cp -r mount_cryptofs /usr/src/sbin/ && cp -r crypto2/cryptofs /sys/modules/ && cp Making/Makefile /usr/src/sbin/ \
+&& make -C /usr/src/sbin/ && make install -C /usr/src/sbin/ && cp jail/jail.h /sys/sys/ && cp vnode/vnode.h /sys/sys/ && cp makeFileForModules/Makefile /usr/src/sys/modules/ \
+&& cp syscalls.master /sys/kern/ && cp sys_skey.c /sys/kern/ && cp Symbol.map /usr/src/lib/libc/sys/ && cp sysCallFiles/files /sys/conf/ && cp ucred.h /sys/sys/ \
 && make sysent -C /usr/src/sys/kern/ \
