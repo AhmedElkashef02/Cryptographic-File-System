@@ -8,7 +8,6 @@ cp -r cryptofs /sys/fs/ \
 && cp jail/jail.h /sys/sys/ \
 && cp vnode/vnode.h /sys/sys/ \
 && cp makeFileForModules/Makefile /usr/src/sys/modules/ \
-rm /sys/kern/syscalls.master \
 && cp syscalls.master /sys/kern/ \
 && make sysent -C /usr/src/sys/kern/ \
 && cp sys_skey.c /sys/kern/ \ 
