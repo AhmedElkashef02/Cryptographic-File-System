@@ -76,7 +76,7 @@ getpassword (const char *password, unsigned char *key, int keylen) {
   }
 }
 
-int encrypt(int argc, char **argv) {
+int encrypt_file(int argc, char **argv) {
 
   unsigned long rk[RKLENGTH(KEYBITS)];	/* round key */
   unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */
@@ -88,6 +88,7 @@ int encrypt(int argc, char **argv) {
   char *password;			/* supplied (ASCII) password */
   int	fd;
   char *filename;
+  ino_t fileId;
   unsigned char filedata[16];
   unsigned char ciphertext[16];
   unsigned char ctrvalue[16];
@@ -111,7 +112,7 @@ int encrypt(int argc, char **argv) {
   struct stat file_information;
   stat(filename, &finfo);
   /*Get file's associated user using stat()*/
-  ino_t fileId = file_information.st_ino;
+  fileId = file_information.st_ino;
   
 #else
   if (argc < 4)
@@ -196,22 +197,25 @@ int encrypt(int argc, char **argv) {
     totalbytes += nbytes;
   }
   close (fd);
+  return 0;
 }
 
 
 int main (int argc, char **argv) {
   int checked_char = getopt (argc, argv, "ed:");
+  int encryptf =0;
+  int decryptf =0;
   int encryptionFlag = 0;
   int decryptionFlag = 0;
   
   switch (checked_char) {
     case 'e':
-      encryptionFlag = 1;
-      decryptionFlag = 0;
+      encryptf = 1;
+      decryptf = 0;
       break;
     case 'd':
-      encryptionFlag = 0;
-      decryptionFlag = 1;
+      encryptf = 0;
+      decryptf = 1;
       break;
     default:
       // if there are no flags, display error and exit
@@ -224,37 +228,47 @@ int main (int argc, char **argv) {
     printf("please provide enough parameters.\n");
     return 1;
   }
+
+    //get the filename                                                   
+  char* filename = argv[3];
+
   
   //to get the mode of the file, we need to define the following struct
   struct stat file_stats;
   stat(filename, &file_stats);
   mode_t mode = file_stats.st_mode;
   
-  //get the filename
-  char* filename = argv[3];
+ 
   
   //determine the mode of operation for the file (sticky bit and key availablity)
-  if (mode & S_ISVTX == 1) {
+  if ((mode & S_ISVTX) == 1) {
     encryptionFlag = 1;
     decryptionFlag = 0;
-  } else if (mode & S_ISVTX == 0){
+  } else if ((mode & S_ISVTX) == 0){
     encryptionFlag = 0;
     decryptionFlag = 1;
   }
   
   //prevent non-necessary encryption or decryption
-  if (encryptionFlag == 1) {
+  if (encryptionFlag == 1 && encryptf ==1) {
     printf("Already encrypted\n");
 	  return 1;
   } 
-  else if (decryptionFlag == 1) {
+  else if (decryptionFlag == 1 && decryptf ==1) {
     printf("Already decrypted\n");
 	  return 1;
   }
+
+
+   unsigned int k0;
+  unsigned int k1;
+ unsigned char key[KEYLENGTH(KEYBITS)];/* cipher key */  
+  bcopy (&k0, &(key[0]), sizeof (k0));
+  bcopy (&k1, &(key[sizeof(k0)]), sizeof (k1));
   
   mode_t new_mode = (mode ^ S_ISVTX);
   syscall(SETKEY, k0, k1);
-  encrypt();
+  encrypt_file(argc, argv);
   chmod(filename, new_mode);
   
 }
