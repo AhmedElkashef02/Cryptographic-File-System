@@ -4,9 +4,9 @@
 # $Id: Makefile,v 1.2 2003/04/15 00:26:33 elm Exp elm $
 # NOTE: has GNU make specific stuff
 
-SRCS = encrypt.c rijndael.c
+SRCS = protectfile.c rijndael.c
 INCS = rijndael.h
-PROGS = encrypt
+PROGS = protectfile
 OTHERS = testfile Makefile
 DIR = $(notdir $(PWD))
 TAR = tar
@@ -17,8 +17,8 @@ CFLAGS = -O3
 
 all: $(PROGS)
 
-encrypt: encrypt.o $(COBJS) $(INCS)
-	$(CC) $(CFLAGS) -o $@ encrypt.o $(COBJS)
+protectfile: protectfile.o $(COBJS) $(INCS)
+	$(CC) $(CFLAGS) -o $@ protectfile.o $(COBJS)
 
 rijndael.o: rijndael.h
 
@@ -27,8 +27,8 @@ tarball:
 
 test: all
 	cp testfile testfile.orig~
-	./encrypt 0x1234 0x5678 testfile
-	./encrypt 0x1234 0x5678 testfile
+	./protectfile 0x1234 0x5678 testfile
+	./protectfile 0x1234 0x5678 testfile
 	diff testfile testfile.orig~
 
 clean:
