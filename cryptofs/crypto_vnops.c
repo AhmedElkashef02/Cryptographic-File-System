@@ -1044,7 +1044,6 @@ crypto_read(struct vop_read_args *ap) {
     out = VOP_READ(lvp, uio, ioflag, cred);
   }
   printf("FILE READ CRYPTO");
-  VOP_UNLOCK(vp,0);
   return(out);
 }
 
