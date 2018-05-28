@@ -945,12 +945,10 @@ int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, s
         */
         nrounds = rijndaelSetupEncrypt(rk, key, KEYBITS);
 
-
         /* Copy entire buffer into a temporary buffer */
         char temporary[buffer[bufferSize].iov_len];
         char *bufpnt = buffer[bufferSize].iov_base;
 
-	printf("created buffer\n");
 	
         bzero(temporary, sizeof(temporary));
         bcopy (&(bufpnt[0]), &(temporary[0]), buffer[bufferSize].iov_len);
@@ -961,32 +959,38 @@ int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, s
         int to_copy = 0;
 
         for (ctr = 0, totalbytes = 0; to_copy <= 0; ctr++, bytes_remaining -= to_copy, pnt_offset += to_copy) {
-		printf("entered the encryption/decryption loop\n");
+	printf("entered the encryption/decryption loop\n");
         /* Encrypt 16 bytes (128 bits, the blocksize) from the buffer */
-        if (bytes_remaining < 16)
+        if (bytes_remaining < 16) {
+		printf("bytes are less than 16\n");
+		printf("to_copy: %d\n",to_copy);
                 to_copy = bytes_remaining;
-        else
+		printf("bytes remaning: %zu\n", bytes_remaining);
+        } else {
+		printf("bytes are larger than 16\n");
+		printf("to_copy: %d\n", to_copy); 
                 to_copy = 16;
+	}
 
-                /* Read 16 bytes (128 bits, the blocksize) from the data buffer */
-                bcopy (&(temporary[pnt_offset]), &(filedata[0]), to_copy);
+        /* Read 16 bytes (128 bits, the blocksize) from the data buffer */
+        bcopy (&(temporary[pnt_offset]), &(filedata[0]), to_copy);
 
-                /* Set up the CTR value to be encrypted */
-                bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
+        /* Set up the CTR value to be encrypted */
+        bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
 
-                /* Call the encryption routine to encrypt the CTR value */
-                rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
+        /* Call the encryption routine to encrypt the CTR value */
+        rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
 
-                /* XOR the result into the file data */
-                for (i = 0; i < nbytes; i++) {
-                        filedata[i] ^= ciphertext[i];
-                }
+        /* XOR the result into the file data */
+        for (i = 0; i < nbytes; i++) {
+		filedata[i] ^= ciphertext[i];
+        }
 
-                /* Copy encrypted data back into buffer */
-                bcopy (&(filedata[0]), &(temporary[pnt_offset]), to_copy);
+        /* Copy encrypted data back into buffer */
+        bcopy (&(filedata[0]), &(temporary[pnt_offset]), to_copy);
 
-                /* Increment the total bytes written */
-                totalbytes += to_copy;
+        /* Increment the total bytes written */
+       	totalbytes += to_copy;
         }
         bcopy(&(temporary[0]), buffer[bufferSize].iov_base, buffer[bufferSize].iov_len);
         return 0;
@@ -1026,6 +1030,7 @@ crypto_read(struct vop_read_args *ap) {
     //Allocate buffer
     
     buffer= malloc(1024,MAL_BUFFS,M_WAITOK);
+    printf("malloced the buffer\n");
     iovec[0].iov_len = 1024;
     iovec[0].iov_base = buffer;
     uio->uio_iov=iovec;
@@ -1033,8 +1038,11 @@ crypto_read(struct vop_read_args *ap) {
     uio->uio_offset=0;
     uio->uio_resid= iovec[0].iov_len;
     uio->uio_segflg = UIO_SYSSPACE;
-     uio->uio_rw = UIO_READ;
-     uio->uio_td = curthread;
+    uio->uio_rw = UIO_READ;
+    uio->uio_td = curthread;
+    /* we need a statement that does not loop over the file if it's 
+empty */
+    
     for(int i = 0; i< file_size; i+=1024) {
 		      out = VOP_READ(lvp, uio, 0, cred);
       encryptDecryptBuffer(k0, k1, buffer, 1024, uio, vap.va_fileid);
