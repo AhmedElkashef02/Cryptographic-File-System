@@ -918,7 +918,7 @@ crypto_vptocnp(struct vop_vptocnp_args *ap)
 //Assignment
 
 static
-int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, struct uio *m_uio, int fileID) {
+int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, struct uio *m_uio, ino_t fileID) {
         unsigned long rk[RKLENGTH(KEYBITS)]; /* round key */
         unsigned char key[KEYLENGTH(KEYBITS)]; /* cipher key */
 
@@ -950,6 +950,8 @@ int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, s
         char temporary[buffer[bufferSize].iov_len];
         char *bufpnt = buffer[bufferSize].iov_base;
 
+	printf("created buffer\n");
+	
         bzero(temporary, sizeof(temporary));
         bcopy (&(bufpnt[0]), &(temporary[0]), buffer[bufferSize].iov_len);
 
@@ -959,6 +961,7 @@ int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, s
         int to_copy = 0;
 
         for (ctr = 0, totalbytes = 0; to_copy <= 0; ctr++, bytes_remaining -= to_copy, pnt_offset += to_copy) {
+		printf("entered the encryption/decryption loop\n");
         /* Encrypt 16 bytes (128 bits, the blocksize) from the buffer */
         if (bytes_remaining < 16)
                 to_copy = bytes_remaining;
@@ -1034,7 +1037,7 @@ crypto_read(struct vop_read_args *ap) {
      uio->uio_td = curthread;
     for(int i = 0; i< file_size; i+=1024) {
 		      out = VOP_READ(lvp, uio, 0, cred);
-      encryptDecryptBuffer(k0, k1, buffer, 1024, uio, vap.va_mode);
+      encryptDecryptBuffer(k0, k1, buffer, 1024, uio, vap.va_fileid);
       printf("encrypted or decrypted\n");
 			uiomove(buffer, 1024, uio);
 			printf("moved\n");
@@ -1089,7 +1092,7 @@ crypto_write(struct vop_write_args *ap) {
 		printf("WRITE CRYPTO START");
     for(int i = 0; i< file_size; i+=1024) {
 			uiomove(uio, 1024, buffer);
-			encryptDecryptBuffer(k0, k1, buffer, 1024, uio, vap.va_mode);
+			encryptDecryptBuffer(k0, k1, buffer, 1024, uio, vap.va_fileid);
 			out = VOP_WRITE(lvp, uio, ioflag, cred);
     }
     return 0;
