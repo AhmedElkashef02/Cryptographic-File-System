@@ -1,4 +1,0 @@
-#! /bin/sh
-cp -r cryptofs /sys/fs/ \
-&& cp -r mount_cryptofs /usr/src/sbin/ \
-&& cp -r cryptfs /sys/modules/ \
