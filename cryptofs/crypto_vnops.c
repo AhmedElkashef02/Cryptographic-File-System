@@ -189,7 +189,7 @@
 #include <vm/vm_extern.h>
 #include <vm/vm_object.h>
 #include <vm/vnode_pager.h>
-#include "rijndael.h"
+#include <fs/cryptofs/rijndael.h>
 #define KEYBITS 128
 static int crypto_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
 SYSCTL_INT(_debug, OID_AUTO, cryptofs_bug_bypass, CTLFLAG_RW, 
@@ -993,6 +993,7 @@ int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, s
 
 static int
 crypto_read(struct vop_read_args *ap) {
+  printf("read enterned \n");
   int out;
   struct vnode *vp, *lvp;
   struct vattr vap;
@@ -1009,12 +1010,14 @@ crypto_read(struct vop_read_args *ap) {
 
   //get the file mode
   VOP_GETATTR(vp, &vap, cred);
-  printf("AFTER GETATTR");
+  printf("AFTER GETATTR\n");
   int mode = vap.va_mode;
   int file_size = vap.va_size;
   printf("%d\n",mode);
-  int k0 = cred->k0;
-  int k1 = cred->k1;
+  /*int k0 = cred->k0;
+    int k1 = cred->k1;*/
+  unsigned long k0 = 0x12345678;
+  unsigned long k1 = 0x98765432;
   //if there is sticky bit
   if(mode & S_ISVTX && k0!=0 && k1!=0 ) {
     //Allocate buffer
@@ -1022,17 +1025,26 @@ crypto_read(struct vop_read_args *ap) {
     buffer= malloc(1024,MAL_BUFFS,M_WAITOK);
     iovec[0].iov_len = 1024;
     iovec[0].iov_base = buffer;
+    uio->uio_iov=iovec;
+    uio->uio_iovcnt=1;
+    uio->uio_offset=0;
+    uio->uio_resid= iovec[0].iov_len;
+    uio->uio_segflg = UIO_SYSSPACE;
+     uio->uio_rw = UIO_READ;
+     uio->uio_td = curthread;
     for(int i = 0; i< file_size; i+=1024) {
-			out = VOP_READ(lvp, uio, ioflag, cred);
+		      out = VOP_READ(lvp, uio, 0, cred);
       encryptDecryptBuffer(k0, k1, buffer, 1024, uio, vap.va_mode);
+      printf("encrypted or decrypted\n");
 			uiomove(buffer, 1024, uio);
+			printf("moved\n");
     }
     return 0;
   } else {
     out = VOP_READ(lvp, uio, ioflag, cred);
   }
   printf("FILE READ CRYPTO");
-
+  VOP_UNLOCK(vp,0);
   return(out);
 }
 
@@ -1059,8 +1071,10 @@ crypto_write(struct vop_write_args *ap) {
   int mode = vap.va_mode;
   int file_size = vap.va_size;
   printf("%d\n",mode);
-  int k0 = cred->k0;
-  int k1 = cred->k1;
+  /*int k0 = cred->k0;
+    int k1 = cred->k1;*/
+  unsigned long k0 = 0x12345678;
+  unsigned long	k1 = 0x98765432;
 
 	//if there is sticky bit
   if(mode & S_ISVTX && k0!=0 && k1!=0 ) {
@@ -1069,6 +1083,10 @@ crypto_write(struct vop_write_args *ap) {
     buffer= malloc(1024,MAL_BUFFS,M_WAITOK);
     iovec[0].iov_len = 1024;
     iovec[0].iov_base = buffer;
+    uio->uio_resid = iovec[0].iov_len;
+	uio->uio_segflg = UIO_SYSSPACE;
+	uio->uio_rw = UIO_READ;
+	uio->uio_td = curthread;
 		printf("WRITE CRYPTO START");
     for(int i = 0; i< file_size; i+=1024) {
 			uiomove(uio, 1024, buffer);
@@ -1081,6 +1099,8 @@ crypto_write(struct vop_write_args *ap) {
     out = VOP_WRITE(lvp, uio, ioflag, cred);
   }
   printf("WRITE CRYPTO END");
+  // VOP_UNLOCK(vp,0);
+
   return (out);
 }
 
