@@ -971,26 +971,25 @@ int encryptDecryptBuffer(int k0, int k1, struct iovec *buffer, int bufferSize, s
 		printf("to_copy: %d\n", to_copy); 
                 to_copy = 16;
 	}
+		/* Read 16 bytes (128 bits, the blocksize) from the data buffer */
+        	bcopy (&(temporary[pnt_offset]), &(filedata[0]), to_copy);
 
-        /* Read 16 bytes (128 bits, the blocksize) from the data buffer */
-        bcopy (&(temporary[pnt_offset]), &(filedata[0]), to_copy);
+        	/* Set up the CTR value to be encrypted */
+        	bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
 
-        /* Set up the CTR value to be encrypted */
-        bcopy (&ctr, &(ctrvalue[0]), sizeof (ctr));
+        	/* Call the encryption routine to encrypt the CTR value */
+        	rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
 
-        /* Call the encryption routine to encrypt the CTR value */
-        rijndaelEncrypt(rk, nrounds, ctrvalue, ciphertext);
+        	/* XOR the result into the file data */
+        	for (i = 0; i < nbytes; i++) {
+			filedata[i] ^= ciphertext[i];
+        	}
 
-        /* XOR the result into the file data */
-        for (i = 0; i < nbytes; i++) {
-		filedata[i] ^= ciphertext[i];
-        }
+        	/* Copy encrypted data back into buffer */
+        	bcopy (&(filedata[0]), &(temporary[pnt_offset]), to_copy);
 
-        /* Copy encrypted data back into buffer */
-        bcopy (&(filedata[0]), &(temporary[pnt_offset]), to_copy);
-
-        /* Increment the total bytes written */
-       	totalbytes += to_copy;
+        	/* Increment the total bytes written */
+       		totalbytes += to_copy;
         }
         bcopy(&(temporary[0]), buffer[bufferSize].iov_base, buffer[bufferSize].iov_len);
         return 0;
